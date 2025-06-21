@@ -1,4 +1,4 @@
-package com.servicecops.project.services.Department;
+package com.servicecops.project.services.department;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.Department;
@@ -99,8 +99,13 @@ public class DepartmentService extends BaseWebActionsService {
 
   public OperationReturnObject findById(JSONObject request) {
     requiresAuth();
+    requires(List.of(Params.DATA.getLabel()), request);
+    JSONObject data = request.getJSONObject(Params.DATA.getLabel());
+    requires(List.of(Params.DEPARTMENT_ID.getLabel()), data);
 
-    Department departments = departmentRepository.findById(request.getLong("id")).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
+    Long departmentId = data.getLong(Params.DEPARTMENT_ID.getLabel());
+
+    Department departments = departmentRepository.findById(departmentId).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
 
     OperationReturnObject res = new OperationReturnObject();
     res.setCodeAndMessageAndReturnObject(200,"request successful", departments);

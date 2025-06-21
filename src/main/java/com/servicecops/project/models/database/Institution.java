@@ -30,4 +30,7 @@ public class Institution {
     @Column(name = "created_by")
     private Long createdBy;
 
+    @Column(name = "active")
+    private boolean active;
+
 }

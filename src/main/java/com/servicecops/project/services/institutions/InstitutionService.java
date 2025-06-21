@@ -45,8 +45,8 @@ public class InstitutionService extends BaseWebActionsService {
   public OperationReturnObject switchActions(String action, JSONObject request) {
     return switch (action){
       case "save" -> this.save(request);
-      case "get_all" -> this.getAll(request);
-      case "get_single" -> this.findById(request);
+      case "getAll" -> this.getAll(request);
+      case "getSingle" -> this.findById(request);
       case "edit" -> this.edit(request);
       case "delete" -> this.delete(request);
 
@@ -74,10 +74,12 @@ public class InstitutionService extends BaseWebActionsService {
     newInstitution.setName(data.getString("name"));
     newInstitution.setCode(code);
     newInstitution.setCreatedAt(Instant.now());
-    newInstitution.setCreatedBy(authenticatedUser().getId());
+    newInstitution.setCreatedBy(1L);
+    newInstitution.setActive(true);
 
     institutionRepository.save(newInstitution);
 
+    System.out.println("New Institution: " + newInstitution.getName() + " with code: " + newInstitution.getCode());
     OperationReturnObject res = new OperationReturnObject();
     res.setCodeAndMessageAndReturnObject(200,newInstitution.getName() + " successfully added", newInstitution);
 
@@ -129,11 +131,15 @@ public class InstitutionService extends BaseWebActionsService {
 
   public OperationReturnObject delete(JSONObject request) {
     requiresAuth();
+    requires(List.of(Params.DATA.getLabel()), request);
+    JSONObject data = request.getJSONObject(Params.DATA.getLabel());
+    requires(Params.ID.getLabel(), data);
+    Long institutionId = data.getLong(Params.ID.getLabel());
 
+    Institution institution = institutionRepository.findById(institutionId).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
 
-    Institution institution = institutionRepository.findById(request.getLong("id")).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
-
-    institutionRepository.delete(institution);
+    institution.setActive(false);
+    institutionRepository.save(institution);
 
     OperationReturnObject res = new OperationReturnObject();
     res.setReturnCodeAndReturnObject(200, institution);

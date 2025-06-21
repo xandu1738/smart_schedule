@@ -1,0 +1,152 @@
+package com.servicecops.project.services.institutions;
+
+import com.alibaba.fastjson2.JSONObject;
+import com.servicecops.project.models.database.Institution;
+import com.servicecops.project.repositories.InstitutionRepository;
+import com.servicecops.project.services.base.BaseWebActionsService;
+import com.servicecops.project.utils.OperationReturnObject;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.List;
+
+
+@RequiredArgsConstructor
+@Service
+public class InstitutionService extends BaseWebActionsService {
+
+  private final InstitutionRepository institutionRepository;
+
+
+
+
+  @RequiredArgsConstructor
+  @Getter
+  private enum Params {
+    ID("id"),
+    CODE("code"),
+    NAME("name"),
+    DATA("data"),
+
+    ;
+    private final String label;
+  }
+
+
+
+
+
+
+
+
+  @Override
+  public OperationReturnObject switchActions(String action, JSONObject request) {
+    return switch (action){
+      case "save" -> this.save(request);
+      case "get_all" -> this.getAll(request);
+      case "get_single" -> this.findById(request);
+      case "edit" -> this.edit(request);
+      case "delete" -> this.delete(request);
+
+      default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
+    };
+  }
+
+
+  public OperationReturnObject save(JSONObject request) {
+    requiresAuth();
+    requires(List.of(Params.DATA.getLabel()), request);
+    JSONObject data = request.getJSONObject(Params.DATA.getLabel());
+    requires(List.of(Params.NAME.getLabel()), data);
+
+    String name = data.getString(Params.NAME.getLabel());
+    String code = name.replaceAll(" ", "_").toUpperCase();
+
+    Institution institution = institutionRepository.findByCode(code);
+
+    if (institution != null) {
+      throw new IllegalArgumentException("Institution with code " + code + " already exists.");
+    }
+
+    Institution newInstitution = new Institution();
+    newInstitution.setName(data.getString("name"));
+    newInstitution.setCode(code);
+    newInstitution.setCreatedAt(Instant.now());
+    newInstitution.setCreatedBy(authenticatedUser().getId());
+
+    institutionRepository.save(newInstitution);
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setCodeAndMessageAndReturnObject(200,newInstitution.getName() + " successfully added", newInstitution);
+
+    return res;
+  }
+
+  public OperationReturnObject getAll(JSONObject request) {
+    requiresAuth();
+
+    List institutions = institutionRepository.findAll();
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions);
+
+    return res;
+  }
+
+  public OperationReturnObject findById(JSONObject request) {
+    requiresAuth();
+
+    Institution institutions = institutionRepository.findById(request.getLong("id")).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions);
+
+    return res;
+  }
+
+  public OperationReturnObject edit(JSONObject request) {
+    requiresAuth();
+
+    Institution institutions = institutionRepository.findById(request.getLong("id")).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
+
+    if (request.containsKey("code") && request.getString("code") != null) {
+      institutions.setCode(request.getString("code"));
+    }
+
+    if (request.containsKey("name") && request.getString("name") != null) {
+      institutions.setName(request.getString("name"));
+    }
+
+    institutionRepository.save(institutions);
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions);
+
+    return res;
+  }
+
+  public OperationReturnObject delete(JSONObject request) {
+    requiresAuth();
+
+
+    Institution institution = institutionRepository.findById(request.getLong("id")).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
+
+    institutionRepository.delete(institution);
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institution);
+
+    return res;
+  }
+
+
+
+
+
+
+
+
+
+}

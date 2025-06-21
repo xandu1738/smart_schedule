@@ -34,6 +34,8 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     @Autowired
     private ApplicationConf userDetailService;
 
+
+
     public OperationReturnObject process(String action, JSONObject payload) {
         return switchActions(action, payload);
     }

@@ -10,14 +10,5 @@ public interface InstitutionRepository extends JetRepository<Institution, Long> 
 
     Institution findByName(String name);
 
-    boolean existsByCode(String code);
-
-    boolean existsByName(String name);
-
-    void deleteByCode(String code);
-
-    void deleteByName(String name);
-
-
 
 }

@@ -16,12 +16,14 @@ export const APP_MENUS = [
 	// },
 
 	{
+		icon: "LayoutDashboard",
 		name: "Dashboard",
 		path: APP_ROUTE.DASHBOARD,
 	},
 	{
+		icon: "Landmark",
 		name: "Institutions",
-		path: APP_ROUTE.INSTITUTIONS,
+		path: buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.INSTITUTIONS),
 		permissions: APP_PERMISSIONS.CAN_VIEW_INSTITUTIONS,
 		childMenus: [
 			{
@@ -31,15 +33,18 @@ export const APP_MENUS = [
 		],
 	},
 	{
+		icon: "Building",
 		name: "Departments",
-		path: APP_ROUTE.DEPARTMENTS,
+		path: buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.DEPARTMENTS),
 	},
 	{
+		icon: "CalendarCheck",
 		name: "Schedules",
-		path: APP_ROUTE.DEPARTMENTS,
+		path: buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.SCHEDULES),
 	},
 	{
+		icon: "ArrowLeftRight",
 		name: "Shifts",
-		path: APP_ROUTE.DEPARTMENTS,
+		path: buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.SHIFTS),
 	},
 ];

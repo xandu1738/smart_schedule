@@ -3,7 +3,10 @@ package com.servicecops.project.services.auth;
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.config.ApplicationConf;
 import com.servicecops.project.config.JwtUtility;
+import com.servicecops.project.models.database.Institution;
 import com.servicecops.project.models.database.SystemUserModel;
+import com.servicecops.project.models.dtos.UserDto;
+import com.servicecops.project.models.dtos.mapper.UserDtoMapper;
 import com.servicecops.project.models.jpahelpers.enums.DefaultRoles;
 import com.servicecops.project.repositories.SystemUserRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
@@ -27,6 +30,7 @@ public class AuthService extends BaseWebActionsService {
     private final JwtUtility jwtUtility;
     private final PasswordEncoder passwordEncoder;
     private final SystemUserRepository systemUserRepository;
+    private final UserDtoMapper userDtoMapper;
 
     private OperationReturnObject login(JSONObject request) {
         requires(List.of("data"), request);
@@ -86,12 +90,13 @@ public class AuthService extends BaseWebActionsService {
             throw new IllegalArgumentException("Password is required");
         }
 
-        //todo: validate institution
+        Institution institutionDetails = getInstitution(institution);
+
         SystemUserModel user = new SystemUserModel();
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setEmail(email);
-        user.setInstitutionId(institution);
+        user.setInstitutionId(institutionDetails.getId());
         user.setRoleCode(role);
         user.setPassword(passwordEncoder.encode(password));
         user.setCreatedAt(getCurrentTimestamp());
@@ -105,19 +110,48 @@ public class AuthService extends BaseWebActionsService {
     }
 
     private OperationReturnObject usersList(JSONObject request){
+        requiresAuth();
         JSONObject search = request.getJSONObject("search");
 
         if(search == null){
             search = new JSONObject();
         }
 
-        List<SystemUserModel> users = systemUserRepository.findAll();
+        List<UserDto> users = systemUserRepository.findAll().stream()
+                .map(userDtoMapper)
+                .toList();
+
         OperationReturnObject returnObject = new OperationReturnObject();
         returnObject.setReturnCodeAndReturnMessage(0, "Users list successfully");
         returnObject.setReturnObject(users);
         return returnObject;
     }
 
+    private OperationReturnObject usersProfile(JSONObject request){
+        requiresAuth();
+        JSONObject search = request.getJSONObject("search");
+
+        if(search == null){
+            search = new JSONObject();
+        }
+
+        Long id = search.getLong("id");
+        if (id == null){
+            throw new IllegalStateException("Please specify user's ID");
+        }
+
+        var users = systemUserRepository.findById(id)
+                .orElseThrow(
+                        () -> new IllegalFormatFlagsException("User profile does not exist")
+                );
+
+        Optional<UserDto> userDto = Optional.of(users).map(userDtoMapper);
+
+        OperationReturnObject returnObject = new OperationReturnObject();
+        returnObject.setReturnCodeAndReturnMessage(0, "Users list successfully");
+        returnObject.setReturnObject(userDto);
+        return returnObject;
+    }
 
     @Override
     public OperationReturnObject switchActions(String action, JSONObject request) {
@@ -125,6 +159,7 @@ public class AuthService extends BaseWebActionsService {
             case "login" -> login(request);
             case "register" -> signUp(request);
             case "usersList" -> usersList(request);
+            case "profile" -> usersProfile(request);
             default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
         };
     }

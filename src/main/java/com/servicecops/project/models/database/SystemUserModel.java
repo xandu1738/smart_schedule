@@ -1,10 +1,7 @@
 package com.servicecops.project.models.database;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,7 +11,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -25,7 +23,7 @@ public class SystemUserModel implements UserDetails {
     @Column(name = "id")
     private Long id;
     @Column(name = "institution_id")
-    private Long institutionId;
+    private Integer institutionId;
     @Basic
     @Column(name = "first_name")
     private String firstName;

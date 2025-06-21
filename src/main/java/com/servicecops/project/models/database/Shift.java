@@ -1,12 +1,17 @@
 package com.servicecops.project.models.database;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 @Entity
@@ -26,18 +31,15 @@ public class Shift {
     @Column(name = "name")
     private String name;
 
-    @Column(name = "shift_duration")
-    private Integer shiftDuration;
-
     @Column(name = "start_time")
-    private Instant startTime;
+    private Timestamp startTime;
 
     @Column(name = "end_time")
-    private Instant endTime;
+    private Timestamp endTime;
 
     @ColumnDefault("now()")
     @Column(name = "created_at")
-    private Instant createdAt;
+    private Timestamp createdAt;
 
     @Column(name = "created_by")
     private Long createdBy;

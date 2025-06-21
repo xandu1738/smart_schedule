@@ -35,12 +35,6 @@ public class InstitutionService extends BaseWebActionsService {
   }
 
 
-
-
-
-
-
-
   @Override
   public OperationReturnObject switchActions(String action, JSONObject request) {
     return switch (action){
@@ -111,20 +105,26 @@ public class InstitutionService extends BaseWebActionsService {
   public OperationReturnObject edit(JSONObject request) {
     requiresAuth();
 
-    Institution institutions = institutionRepository.findById(request.getLong("id")).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
+    requires(List.of(Params.DATA.getLabel()), request);
+    JSONObject data = request.getJSONObject(Params.DATA.getLabel());
+    requires(List.of(Params.NAME.getLabel(),Params.ID.getLabel()), data);
 
-    if (request.containsKey("code") && request.getString("code") != null) {
-      institutions.setCode(request.getString("code"));
+    Long institutionId = data.getLong("id");
+
+    Institution institution = institutionRepository.findById(institutionId).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
+
+    if (data.containsKey("code") && data.getString("code") != null) {
+      institution.setCode(data.getString("code"));
     }
 
-    if (request.containsKey("name") && request.getString("name") != null) {
-      institutions.setName(request.getString("name"));
+    if (data.containsKey("name") && data.getString("name") != null) {
+      institution.setName(data.getString("name"));
     }
 
-    institutionRepository.save(institutions);
+    institutionRepository.save(institution);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setReturnCodeAndReturnObject(200, institutions);
+    res.setCodeAndMessageAndReturnObject(200,institution.getName() + "edited successfully" ,institution);
 
     return res;
   }
@@ -142,17 +142,10 @@ public class InstitutionService extends BaseWebActionsService {
     institutionRepository.save(institution);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setReturnCodeAndReturnObject(200, institution);
+    res.setCodeAndMessageAndReturnObject(200,institution.getName() + " deleted successfully" ,institution);
 
     return res;
   }
-
-
-
-
-
-
-
 
 
 }

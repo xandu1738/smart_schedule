@@ -94,7 +94,7 @@ const DashboardLayout = () => {
 											trimSlashes(menu?.path) ==
 												trimSlashes(pathname)
 												? "group active flex gap-2 items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors border-r-2 bg-blue-50 text-blue-700 border-blue-700"
-												: "group inactive flex gap-2 items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors border-r-2 bg-black-50 text-black-500"
+												: "group inactive flex gap-2 items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-black-50 text-black-500"
 										}
 										// className="group flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors border-r-2 bg-slate-50 text-black-700 border-black-700"
 										to={`/${menu?.path}`}
@@ -115,21 +115,21 @@ const DashboardLayout = () => {
 					</ul>
 				</nav>
 				<div className="absolute bottom-2 left-3 right-3 pt-4 border-t border-gray-200">
-					<div className="flex gap-3 items-between pb-6">
-						<div className="w-8 h-8 bg-slate-200 text-black rounded-xs flex items-center justify-center">
+					<div className="flex gap-4 items-between pb-6">
+						<div className="w-8 h-8 bg-slate-200 text-black rounded-xs flex items-center justify-center pointer">
 							<LucideIcon
 								name="BellRing"
-								className="text-black"
-								width="18"
-								height="18"
+								className="text-blue-500"
+								width="15"
+								height="15"
 							/>
 						</div>
-						<div className="w-8 h-8 bg-slate-200 text-black rounded-xs flex items-center justify-center">
+						<div className="w-8 h-8 bg-slate-200 text-black rounded-xs flex items-center justify-center pointer">
 							<LucideIcon
 								name="LogOut"
-								className="text-black"
-								width="18"
-								height="18"
+								className="text-red-500"
+								width="15"
+								height="15"
 							/>
 						</div>
 					</div>

@@ -1,11 +1,13 @@
 import React from 'react'
-import EmployeeCard from '../../components/EmployeeCard'
-import AddButton from '../../components/AddButton'
-import DepartmentCard from '../../components/DepartmentCard'
+import { Calendar } from 'lucide-react'
+import ScheduleDashCard from '../../components/ScheduleDashCard'
+import RecentActivity from '../../components/RecentActivity'
 
 const Dashboard = () => {
   return (
-    <></>
+    <>
+    
+    </>
   )
 }
 

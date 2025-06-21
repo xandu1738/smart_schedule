@@ -35,6 +35,12 @@ public class InstitutionService extends BaseWebActionsService {
   }
 
 
+
+
+
+
+
+
   @Override
   public OperationReturnObject switchActions(String action, JSONObject request) {
     return switch (action){
@@ -51,9 +57,9 @@ public class InstitutionService extends BaseWebActionsService {
 
   public OperationReturnObject save(JSONObject request) {
     requiresAuth();
-    requires(request,Params.DATA.getLabel());
+    requires(List.of(Params.DATA.getLabel()), request);
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data,Params.NAME.getLabel());
+    requires(List.of(Params.NAME.getLabel()), data);
 
     String name = data.getString(Params.NAME.getLabel());
     String code = name.replaceAll(" ", "_").toUpperCase();
@@ -105,35 +111,29 @@ public class InstitutionService extends BaseWebActionsService {
   public OperationReturnObject edit(JSONObject request) {
     requiresAuth();
 
-    requires(request,Params.DATA.getLabel());
-    JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data,Params.NAME.getLabel(),Params.ID.getLabel());
+    Institution institutions = institutionRepository.findById(request.getLong("id")).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
 
-    Long institutionId = data.getLong("id");
-
-    Institution institution = institutionRepository.findById(institutionId).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
-
-    if (data.containsKey("code") && data.getString("code") != null) {
-      institution.setCode(data.getString("code"));
+    if (request.containsKey("code") && request.getString("code") != null) {
+      institutions.setCode(request.getString("code"));
     }
 
-    if (data.containsKey("name") && data.getString("name") != null) {
-      institution.setName(data.getString("name"));
+    if (request.containsKey("name") && request.getString("name") != null) {
+      institutions.setName(request.getString("name"));
     }
 
-    institutionRepository.save(institution);
+    institutionRepository.save(institutions);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200,institution.getName() + "edited successfully" ,institution);
+    res.setReturnCodeAndReturnObject(200, institutions);
 
     return res;
   }
 
   public OperationReturnObject delete(JSONObject request) {
     requiresAuth();
-    requires(request,Params.DATA.getLabel());
+    requires(List.of(Params.DATA.getLabel()), request);
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data,Params.ID.getLabel());
+    requires(Params.ID.getLabel(), data);
     Long institutionId = data.getLong(Params.ID.getLabel());
 
     Institution institution = institutionRepository.findById(institutionId).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
@@ -142,10 +142,17 @@ public class InstitutionService extends BaseWebActionsService {
     institutionRepository.save(institution);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200,institution.getName() + " deleted successfully" ,institution);
+    res.setReturnCodeAndReturnObject(200, institution);
 
     return res;
   }
+
+
+
+
+
+
+
 
 
 }

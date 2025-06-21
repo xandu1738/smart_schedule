@@ -18,12 +18,14 @@ import java.util.Collection;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "system_user", schema = "public", catalog = "project_db")
+@Table(name = "system_user", schema = "public")
 public class SystemUserModel implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "id")
     private Long id;
+    @Column(name = "institution_id")
+    private Long institutionId;
     @Basic
     @Column(name = "first_name")
     private String firstName;
@@ -36,9 +38,6 @@ public class SystemUserModel implements UserDetails {
     @Basic
     @Column(name = "email")
     private String email;
-    @Basic
-    @Column(name = "username")
-    private String username;
     @Basic
     @Column(name = "role_code")
     private String roleCode;
@@ -62,7 +61,7 @@ public class SystemUserModel implements UserDetails {
 
     @Override
     public String getUsername() {
-        return username;
+        return email;
     }
 
     @Override

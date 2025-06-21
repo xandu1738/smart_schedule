@@ -5,6 +5,7 @@ import com.servicecops.project.models.database.SystemPermissionModel;
 import com.servicecops.project.models.database.SystemRoleModel;
 import com.servicecops.project.models.database.SystemRolePermissionAssignmentModel;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
+import com.servicecops.project.models.jpahelpers.enums.DefaultRoles;
 import com.servicecops.project.permissions.Permission;
 import com.servicecops.project.permissions.Permisions;
 import com.servicecops.project.repositories.SystemDomainRepository;
@@ -47,11 +48,11 @@ public class SetUp {
     private final SystemRoleRepository roleRepository;
 
     @PostConstruct
-    protected void setupDomains(){
-        if (Boolean.TRUE.equals(useDomains)){
+    protected void setupDomains() {
+        if (Boolean.TRUE.equals(useDomains)) {
             log.info("Domains supported, setting them up.");
             domainRepository.deleteAll();
-            for(AppDomains domain: AppDomains.values()){
+            for (AppDomains domain : AppDomains.values()) {
                 // check if domain exists orElse create it
                 log.info("Adding {} domain", domain.name());
                 var md = SystemDomainModel.builder();
@@ -59,15 +60,31 @@ public class SetUp {
                 domainRepository.save(md.build());
             }
             log.debug("Domains setup successfully");
-        }else{
+        } else {
             log.info("Domains are currently inactive.");
         }
     }
 
+    @PostConstruct
+    public void setupRoles() {
+        DefaultRoles[] values = DefaultRoles.values();
+        //add roles to db
+        for (DefaultRoles value : values) {
+            Optional<SystemRoleModel> existingRole = roleRepository.findFirstByRoleCode(value.name());
 
+            if (existingRole.isEmpty()) {
+                SystemRoleModel role = SystemRoleModel.builder()
+                        .roleName(value.name())
+                        .roleCode(value.name())
+                        .build();
+                roleRepository.save(role);
+                log.info("Role {} added successfully", role.getRoleName());
+            }
+        }
+    }
 
     @PostConstruct
-    public void setupPermissions(){
+    public void setupPermissions() {
         permissionRepository.deleteAll();
         Permisions obj = new Permisions();
         ReflectionUtils.doWithFields(obj.getClass(), field -> {
@@ -86,19 +103,19 @@ public class SetUp {
         log.info("Permissions setup successfully");
         // Create the default admin role if not exists
         Optional<SystemRoleModel> checkIfAdminRoleExists = roleRepository.findFirstByRoleCode("ADMINISTRATOR");
-        if (checkIfAdminRoleExists.isEmpty()){
+        if (checkIfAdminRoleExists.isEmpty()) {
             // create the role here
             var adminRole = SystemRoleModel.builder();
             adminRole.roleName("Administrator");
 
             if (Boolean.TRUE.equals(useDomains)) {
-                if (StringUtils.isBlank(adminRoleName)){
+                if (StringUtils.isBlank(adminRoleName)) {
                     adminRoleName = "ADMINISTRATOR";
                 }
                 adminRole.roleCode(adminRoleName);
-                if (adminDomain == null){
+                if (adminDomain == null) {
                     throw new IllegalStateException("Please define the domain enum String to be used for administrators");
-                }else{
+                } else {
                     adminRole.roleDomain(adminDomain);
                 }
             }
@@ -106,7 +123,7 @@ public class SetUp {
         }
         // perform the assignment of admin
         Optional<SystemRolePermissionAssignmentModel> assignmentModel = permissionAssignmentRepository.findFirstByRoleCodeAndPermissionCode("ADMINISTRATOR", "ADMINISTRATOR");
-        if (assignmentModel.isEmpty()){
+        if (assignmentModel.isEmpty()) {
             var assignment = SystemRolePermissionAssignmentModel.builder();
             assignment.permissionCode("ADMINISTRATOR");
             assignment.roleCode(adminRoleName);
@@ -120,14 +137,14 @@ public class SetUp {
      * By default, the system creates the first role of ADMINISTRATOR, therefore, this method is to assign it its default permissions.
      * This will assign all the permissions that set 'shipWithAdmin' to true.
      */
-    private void setUpAdminPerms(){
+    private void setUpAdminPerms() {
         Permisions obj = new Permisions();
         ReflectionUtils.doWithFields(obj.getClass(), field -> {
             field.setAccessible(true);
             Permission perm = (Permission) field.get(obj);
-            if (Boolean.TRUE.equals(perm.getShipWithAdmin())){
+            if (Boolean.TRUE.equals(perm.getShipWithAdmin())) {
                 Optional<SystemRolePermissionAssignmentModel> assignmentModel = permissionAssignmentRepository.findFirstByRoleCodeAndPermissionCode("ADMINISTRATOR", perm.getCode());
-                if (assignmentModel.isEmpty()){
+                if (assignmentModel.isEmpty()) {
                     var assignment = SystemRolePermissionAssignmentModel.builder();
                     assignment.permissionCode(perm.getCode());
                     assignment.roleCode(adminRoleName);

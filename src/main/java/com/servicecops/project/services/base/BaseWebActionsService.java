@@ -2,6 +2,7 @@ package com.servicecops.project.services.base;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.config.ApplicationConf;
+import com.servicecops.project.models.database.Institution;
 import com.servicecops.project.models.database.SystemRoleModel;
 import com.servicecops.project.models.database.SystemUserModel;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
@@ -19,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -103,7 +105,9 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
         if (Boolean.TRUE.equals(isAuthenticated())){
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            return userRepository.findFirstByUsername(userDetails.getUsername());
+            return userRepository.findByEmail(userDetails.getUsername()).orElseThrow(
+                    () -> new IllegalStateException("USER NOT FOUND")
+            );
         }
         throw new IllegalArgumentException("AUTHENTICATION REQUIRED");
     }
@@ -235,6 +239,16 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
      */
     public AppDomains getUserDomain(){
         return getRole().getRoleDomain();
+    }
+
+//    protected Institution getInstitution(Long institutionId){
+//        if (institutionId == null){
+//            throw new IllegalArgumentException("Institution Id cannot be null");
+//        }
+//    }
+
+    protected Timestamp getCurrentTimestamp() {
+        return new Timestamp(System.currentTimeMillis());
     }
 
 }

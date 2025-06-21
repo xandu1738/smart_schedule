@@ -4,17 +4,20 @@ import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.config.ApplicationConf;
 import com.servicecops.project.config.JwtUtility;
 import com.servicecops.project.models.database.SystemUserModel;
+import com.servicecops.project.models.jpahelpers.enums.DefaultRoles;
+import com.servicecops.project.repositories.SystemUserRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.EnumUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Timestamp;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -22,26 +25,27 @@ public class AuthService extends BaseWebActionsService {
     private final AuthenticationManager authenticationManager;
     private final ApplicationConf userDetailService;
     private final JwtUtility jwtUtility;
+    private final PasswordEncoder passwordEncoder;
+    private final SystemUserRepository systemUserRepository;
 
-    private OperationReturnObject login(JSONObject request){
+    private OperationReturnObject login(JSONObject request) {
+        requires(List.of("data"), request);
+        JSONObject data = request.getJSONObject("data");
 
-        List<String> requiredFields = new ArrayList<>();
-        requiredFields.add("username");
-        requiredFields.add("password");
-        requires(requiredFields, request);
+        requires(List.of("email", "password"), data);
 
-        String username= request.getString("username");
-        String password= request.getString("password");
+        String email = data.getString("email");
+        String password = data.getString("password");
 
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
+                new UsernamePasswordAuthenticationToken(email, password)
         );
 
-        final SystemUserModel userDetails = userDetailService.loadUserByUsername(username);
+        final SystemUserModel userDetails = userDetailService.loadUserByUsername(email);
         final String token = jwtUtility.generateToken(userDetails);
 
         Map<String, Object> response = new HashMap<>();
-        response.put("token", token); // this is the jwt token the user can user from now on.
+        response.put("accessToken", token); // this is the jwt token the user can user from now on.
         response.put("user", userDetails);
 
         OperationReturnObject res = new OperationReturnObject();
@@ -51,11 +55,76 @@ public class AuthService extends BaseWebActionsService {
         return res;
     }
 
+    private OperationReturnObject signUp(JSONObject request) {
+        requires(List.of("data"), request);
+        JSONObject data = request.getJSONObject("data");
+        requires(List.of("role", "first_name", "last_name", "email", "password"), data);
+        String role = data.getString("role");
+        String firstName = data.getString("first_name");
+        String lastName = data.getString("last_name");
+        String email = data.getString("email");
+        Long institution = data.getLong("institution");
+        String password = data.getString("password");
+
+        if (StringUtils.isBlank(firstName) || StringUtils.isBlank(lastName)) {
+            throw new IllegalArgumentException("First name and last name are required");
+        }
+
+//        if (!EnumUtils.isValidEnum(DefaultRoles.class, role)) {
+//            throw new IllegalArgumentException("Role is not valid");
+//        }
+
+        if (StringUtils.isBlank(email)) {
+            throw new IllegalArgumentException("Email is required");
+        }
+
+        if (!Objects.equals(role, DefaultRoles.SUPER_ADMIN.name()) && institution == null) {
+            throw new IllegalArgumentException("Institution is required");
+        }
+
+        if (StringUtils.isBlank(password)) {
+            throw new IllegalArgumentException("Password is required");
+        }
+
+        //todo: validate institution
+        SystemUserModel user = new SystemUserModel();
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        user.setInstitutionId(institution);
+        user.setRoleCode(role);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setCreatedAt(getCurrentTimestamp());
+        user.setIsActive(true);
+
+        systemUserRepository.save(user);
+
+        OperationReturnObject res = new OperationReturnObject();
+        res.setReturnCodeAndReturnMessage(0, "User created successfully");
+        return res;
+    }
+
+    private OperationReturnObject usersList(JSONObject request){
+        JSONObject search = request.getJSONObject("search");
+
+        if(search == null){
+            search = new JSONObject();
+        }
+
+        List<SystemUserModel> users = systemUserRepository.findAll();
+        OperationReturnObject returnObject = new OperationReturnObject();
+        returnObject.setReturnCodeAndReturnMessage(0, "Users list successfully");
+        returnObject.setReturnObject(users);
+        return returnObject;
+    }
+
 
     @Override
     public OperationReturnObject switchActions(String action, JSONObject request) {
-        return switch (action){
+        return switch (action) {
             case "login" -> login(request);
+            case "register" -> signUp(request);
+            case "usersList" -> usersList(request);
             default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
         };
     }

@@ -11,7 +11,7 @@ import Shift from "./features/shifts/Shift.jsx";
 import { store } from "./helpers/redux/store.js";
 
 import React from "react";
-import { Route, Routes } from "react-router";
+import { Route, Routes, Navigate } from "react-router";
 import { AxiosConfiguration } from "./helpers/axios/axios_helper.js";
 
 const App = () => {
@@ -20,7 +20,7 @@ const App = () => {
 
 	return (
 		<Routes>
-			<Route index element={<DashboardLayout />} />
+			<Route index element={<Navigate to={APP_ROUTE.DASHBOARD} />} />
 			<Route path={APP_ROUTE.DASHBOARD} element={<DashboardLayout />}>
 				<Route index element={<Dashboard />} />
 				<Route

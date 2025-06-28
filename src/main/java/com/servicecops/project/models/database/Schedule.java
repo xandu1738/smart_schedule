@@ -23,7 +23,12 @@ public class Schedule {
     @Column(name = "end_date", nullable = false)
     private Instant endDate;
 
-    @Column(name = "employee_id")
-    private Integer employeeId;
+    @Column(name = "department_id", nullable = false)
+    private Integer departmentId;
+
+    @Column(name = "institution_id", nullable = false)
+    private Integer institutionId;
+
+
 
 }

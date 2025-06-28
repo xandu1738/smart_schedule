@@ -59,7 +59,7 @@ public class DepartmentService extends BaseWebActionsService {
     String departmentName = data.getString(Params.NAME.getLabel());
     Long institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
 
-    Department department = departmentRepository.findByName(departmentName);
+    Department department = departmentRepository.findByName(departmentName).orElseThrow(() -> new IllegalArgumentException("Department not found with id: "));;
 
     if (department != null) {
       throw new IllegalArgumentException("department with name " + departmentName + " already exists.");
@@ -89,7 +89,7 @@ public class DepartmentService extends BaseWebActionsService {
 
     Long institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
 
-    List<Department> departments = departmentRepository.findByInstitutionId(institutionId);
+    List<Department> departments = departmentRepository.findByInstitutionId(institutionId).orElseThrow(() -> new IllegalArgumentException("not found "));;
 
     OperationReturnObject res = new OperationReturnObject();
     res.setReturnCodeAndReturnObject(200, departments);
@@ -99,9 +99,9 @@ public class DepartmentService extends BaseWebActionsService {
 
   public OperationReturnObject findById(JSONObject request) {
     requiresAuth();
-    requires(List.of(Params.DATA.getLabel()), request);
+    requires( request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(List.of(Params.DEPARTMENT_ID.getLabel()), data);
+    requires(data,Params.DEPARTMENT_ID.getLabel());
 
     Long departmentId = data.getLong(Params.DEPARTMENT_ID.getLabel());
 

@@ -14,7 +14,7 @@ const EmployeeCard = ({ email, number, name, department, status, role }) => {
 
 return (
     <>
-        <div className="shadow-md hover:shadow-lg rounded-lg p-4 m-4 w-auto">
+        <div className="shadow-md hover:shadow-lg bg-white rounded-lg p-4 m-4 w-auto">
             <div className="flex flex-row items-center justify-between mb-4">
                 <div className="flex flex-row items-start gap-2">
                     <div className="bg-blue-600 rounded-full h-14 w-14 flex items-center justify-center mb-2">

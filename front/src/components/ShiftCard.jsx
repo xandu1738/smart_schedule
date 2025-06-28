@@ -2,7 +2,7 @@ import {Clock, Clock4, Users, Calendar } from "lucide-react";
 
 const ShiftCard = ({ employeeCount, department, shift, status }) => {
 return (
-    <div className="shadow-md hover:shadow-lg rounded-lg p-6 m-4 w-auto">
+    <div className="shadow-md hover:shadow-lg rounded-lg p-6 m-4 w-auto bg-white">
         <div className="flex flex-row items-center justify-between mb-4">
             <div className="bg-blue-600 rounded-lg p-3 transition-colors">
                 <Clock className="text-white" size={24} />

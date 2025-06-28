@@ -9,7 +9,7 @@ const DepartmentCard = ({
 }) => {
   return (
     <>
-      <div className="shadow-md hover:shadow-lg rounded-lg p-4 m-4 w-auto">
+      <div className="shadow-md hover:shadow-lg rounded-lg p-4 m-4 bg-white w-auto">
         <div className="flex flex-row items-center justify-between mb-4">
             <div className="bg-blue-600 rounded-lg p-3 transition-colors"><Building2 className="text-white"/></div>
             <button onClick={onClick} className="text-sm"><Pencil size={20}/></button>

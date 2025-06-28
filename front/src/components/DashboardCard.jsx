@@ -3,7 +3,7 @@ import { ArrowUpRight } from 'lucide-react'
 const DashboardCard = ({ title, value, icon, stat }) => {
     return (
         <>
-            <div className="shadow-md hover:shadow-lg rounded-lg p-4 m-4 w-auto">
+            <div className="shadow-md hover:shadow-lg rounded-lg p-4 m-4 bg-white w-auto">
                 <p className="flex items-start text-sm font-medium text-gray-600">{title}</p>
                 <div className="flex flex-row items-center justify-between mb-4">
                     <p className="text-3xl font-bold">{value}</p>

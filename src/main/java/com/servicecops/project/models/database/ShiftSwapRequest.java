@@ -3,6 +3,9 @@ package com.servicecops.project.models.database;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.sql.Timestamp;
 
 @Getter
 @Setter
@@ -28,5 +31,15 @@ public class ShiftSwapRequest {
 
     @Column(name = "approved_by")
     private Long approvedBy;
+
+    @Column(name = "requested_by")
+    private Long requestedBy;
+
+    @Column(name = "approved_on")
+    private Timestamp approvedOn;
+
+    @CreationTimestamp
+    @Column(name = "requested_on")
+    private Timestamp requestedOn;
 
 }

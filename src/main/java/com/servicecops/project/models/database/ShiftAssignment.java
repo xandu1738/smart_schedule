@@ -28,7 +28,10 @@ public class ShiftAssignment {
     private String status;
 
     @Column(name = "assigned_by")
-    private Long assignedBy;
+    private Integer assignedBy;
+
+    @Column(name = "updated_by")
+    private Integer updatedBy;
 
     @ColumnDefault("now()")
     @Column(name = "updated_at")

@@ -1,2 +1,2 @@
-ALTER table INSTITUTION add COLUMN active boolean;
+ALTER table INSTITUTION add COLUMN if not exists active boolean;
 

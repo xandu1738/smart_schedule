@@ -9,6 +9,11 @@ public class ScheduleRecordService extends BaseWebActionsService {
   public OperationReturnObject switchActions(String action, JSONObject request) {
     return switch (action) {
       case "save" -> this.addScheduleRecord(request);
+//      case "edit" -> this.addScheduleRecord(request);
+//      case "delete" -> this.addScheduleRecord(request);
+//      case "save" -> this.addScheduleRecord(request);
+//      case "save" -> this.addScheduleRecord(request);
+
 
       default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
     };
@@ -26,5 +31,41 @@ public class ScheduleRecordService extends BaseWebActionsService {
 
     return new OperationReturnObject("Schedule created successfully");
   }
+//
+//  public OperationReturnObject addScheduleRecord(JSONObject request) {
+//    requiresAuth();
+//    requires(request, "data");
+//    JSONObject data = request.getJSONObject("data");
+//    requires(data, "id", "schedule_id", "employee_id", "shift_id", "date_created" ,"time_off_id");
+//
+//    // Logic to create a schedule record
+//    // ...
+//
+//    return new OperationReturnObject("Schedule created successfully");
+//  }
+//
+//  public OperationReturnObject addScheduleRecord(JSONObject request) {
+//    requiresAuth();
+//    requires(request, "data");
+//    JSONObject data = request.getJSONObject("data");
+//    requires(data, "id", "schedule_id", "employee_id", "shift_id", "date_created" ,"time_off_id");
+//
+//    // Logic to create a schedule record
+//    // ...
+//
+//    return new OperationReturnObject("Schedule created successfully");
+//  }
+//
+//  public OperationReturnObject addScheduleRecord(JSONObject request) {
+//    requiresAuth();
+//    requires(request, "data");
+//    JSONObject data = request.getJSONObject("data");
+//    requires(data, "id", "schedule_id", "employee_id", "shift_id", "date_created" ,"time_off_id");
+//
+//    // Logic to create a schedule record
+//    // ...
+//
+//    return new OperationReturnObject("Schedule created successfully");
+//  }
 
 }

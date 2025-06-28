@@ -9,6 +9,8 @@ import com.servicecops.project.repositories.ShiftRepository;
 import com.servicecops.project.repositories.ShiftSwapRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
+import jakarta.transaction.Transactional;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -31,9 +33,9 @@ public class ShiftManagementService extends BaseWebActionsService {
     private OperationReturnObject createShift(JSONObject request) {
         SystemUserModel authenticatedUser = authenticatedUser();
 
-        requires(request,"data");
+        requires(request, "data");
         JSONObject data = request.getJSONObject("data");
-        requires(data,"department_id", "shift_type", "name", "end_time", "start_time", "max_people");
+        requires(data, "department_id", "shift_type", "name", "end_time", "start_time", "max_people");
 
         Integer departmentId = data.getInteger("department_id");
         String shiftType = data.getString("shift_type");
@@ -71,10 +73,10 @@ public class ShiftManagementService extends BaseWebActionsService {
 
     private OperationReturnObject assignToShift(JSONObject request) {
         SystemUserModel authenticatedUser = authenticatedUser();
-        requires(request,"data");
+        requires(request, "data");
         JSONObject data = request.getJSONObject("data");
 
-        requires(data,"shift_id", "user_id");
+        requires(data, "shift_id", "user_id");
 
         Integer shiftId = data.getInteger("shift_id");
         Long userId = data.getLong("user_id");
@@ -87,7 +89,7 @@ public class ShiftManagementService extends BaseWebActionsService {
         assignment.setEmployeeId(user.getId().intValue());
         assignment.setUpdatedAt(getCurrentTimestamp());
         assignment.setStatus(ShitStatus.PENDING.name());
-        assignment.setAssignedBy(authenticatedUser.getId());
+        assignment.setAssignedBy(authenticatedUser.getId().intValue());
 
         shiftAssignmentRepository.save(assignment);
 
@@ -99,9 +101,9 @@ public class ShiftManagementService extends BaseWebActionsService {
 
     private OperationReturnObject makeSwapRequest(JSONObject request) {
         SystemUserModel authenticatedUser = authenticatedUser();
-        requires(request,"data");
+        requires(request, "data");
         JSONObject data = request.getJSONObject("data");
-        requires(data,"from_employee", "to_employee", "shift_id");
+        requires(data, "from_employee", "to_employee", "shift_id");
         Long fromEmployee = data.getLong("from_employee");
         Long toEmployee = data.getLong("to_employee");
         Integer shiftId = data.getInteger("shift_id");
@@ -116,7 +118,7 @@ public class ShiftManagementService extends BaseWebActionsService {
         swapRequest.setFromEmployee(from.getId().intValue());
         swapRequest.setToEmployee(to.getId().intValue());
         swapRequest.setShiftId(shift.getId());
-        swapRequest.setApprovedBy(authenticatedUser().getId());
+        swapRequest.setRequestedBy(authenticatedUser.getId());
 
         shiftSwapRepository.save(swapRequest);
 
@@ -126,12 +128,71 @@ public class ShiftManagementService extends BaseWebActionsService {
         return res;
     }
 
+    @Transactional
+    public OperationReturnObject approveSwapRequest(JSONObject request) {
+        SystemUserModel authenticatedUser = authenticatedUser();
+        requires(request, "data");
+        JSONObject data = request.getJSONObject("data");
+        requires(data, "action","swap_id");
+        String action = data.getString("action");
+
+        if (!EnumUtils.isValidEnum(ShiftSwapStatus.class, action)) {
+            throw new IllegalArgumentException("Invalid action provided");
+        }
+
+        OperationReturnObject res = new OperationReturnObject();
+        Integer swapId = data.getInteger("swap_id");
+        ShiftSwapRequest shiftSwapRequest = shiftSwapRepository.findById(swapId).orElseThrow(
+                () -> new IllegalStateException("No Swap request matches selected ID")
+        );
+
+        if (ShiftSwapStatus.PENDING.name().equals(action)) {
+            res.setReturnCodeAndReturnMessage(400, "Invalid action provided");
+            return res;
+        }
+
+        if (!Objects.equals(shiftSwapRequest.getStatus(),ShiftSwapStatus.PENDING.name())) {
+            throw new IllegalStateException("Swap request is not in pending state");
+        }
+
+        if (ShiftSwapStatus.REJECTED.name().equals(action)) {
+            shiftSwapRequest.setStatus(ShiftSwapStatus.REJECTED.name());
+            shiftSwapRequest.setApprovedBy(authenticatedUser.getId());
+            shiftSwapRequest.setApprovedOn(getCurrentTimestamp());
+            shiftSwapRepository.save(shiftSwapRequest);
+            res.setReturnCodeAndReturnMessage(200, "Swap request rejected successfully");
+            return res;
+        }
+
+        Shift shift = getShift(shiftSwapRequest.getShiftId());
+        shiftAssignmentRepository.findFirstByShiftIdAndEmployeeId(shift.getId(), shiftSwapRequest.getFromEmployee())
+                .ifPresent(assignment -> {
+                    assignment.setEmployeeId(shiftSwapRequest.getToEmployee());
+                    assignment.setUpdatedBy(authenticatedUser.getId().intValue());
+                    assignment.setUpdatedAt(getCurrentTimestamp());
+                    shiftAssignmentRepository.save(assignment);
+                });
+
+        shiftAssignmentRepository.findFirstByShiftIdAndEmployeeId(shift.getId(), shiftSwapRequest.getToEmployee())
+                .ifPresent(assignment -> {
+                    assignment.setEmployeeId(shiftSwapRequest.getFromEmployee());
+                    assignment.setUpdatedBy(authenticatedUser.getId().intValue());
+                    assignment.setUpdatedAt(getCurrentTimestamp());
+                    shiftAssignmentRepository.save(assignment);
+                });
+
+        res.setReturnCodeAndReturnMessage(200, "Swap request approved successfully");
+        return res;
+    }
+
+    @Transactional
     @Override
     public OperationReturnObject switchActions(String action, JSONObject request) {
         return switch (action) {
             case "createShift" -> createShift(request);
             case "assignToShift" -> assignToShift(request);
             case "swapRequest" -> makeSwapRequest(request);
+            case "approveSwap" -> approveSwapRequest(request);
             default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
         };
     }

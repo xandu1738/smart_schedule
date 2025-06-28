@@ -1,10 +1,7 @@
 package com.servicecops.project.services;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.servicecops.project.models.database.Shift;
-import com.servicecops.project.models.database.ShiftAssignment;
-import com.servicecops.project.models.database.ShiftSwapRequest;
-import com.servicecops.project.models.database.SystemUserModel;
+import com.servicecops.project.models.database.*;
 import com.servicecops.project.models.jpahelpers.enums.ShiftSwapStatus;
 import com.servicecops.project.models.jpahelpers.enums.ShitStatus;
 import com.servicecops.project.repositories.ShiftAssignmentRepository;
@@ -34,9 +31,9 @@ public class ShiftManagementService extends BaseWebActionsService {
     private OperationReturnObject createShift(JSONObject request) {
         SystemUserModel authenticatedUser = authenticatedUser();
 
-        requires(List.of("data"), request);
+        requires(request,"data");
         JSONObject data = request.getJSONObject("data");
-        requires(List.of("department_id", "shift_type", "name", "end_time", "start_time", "max_people"), data);
+        requires(data,"department_id", "shift_type", "name", "end_time", "start_time", "max_people");
 
         Integer departmentId = data.getInteger("department_id");
         String shiftType = data.getString("shift_type");
@@ -45,12 +42,13 @@ public class ShiftManagementService extends BaseWebActionsService {
         String startTime = data.getString("start_time");
         Integer maxPeople = data.getInteger("max_people");
 
-        //todo: Validate department
+        Department department = getDepartment(departmentId.longValue());
+
         Shift shift = new Shift();
         shift.setName(Objects.requireNonNull(name));
         shift.setMaxPeople(maxPeople);
         shift.setType(Objects.requireNonNull(shiftType));
-        shift.setDepartmentId(departmentId);
+        shift.setDepartmentId(department.getId());
 
         if (StringUtils.isNotBlank(startTime)) {
             shift.setStartTime(stringToTimestamp(startTime));
@@ -73,10 +71,10 @@ public class ShiftManagementService extends BaseWebActionsService {
 
     private OperationReturnObject assignToShift(JSONObject request) {
         SystemUserModel authenticatedUser = authenticatedUser();
-        requires(List.of("data"), request);
+        requires(request,"data");
         JSONObject data = request.getJSONObject("data");
 
-        requires(List.of("shift_id", "user_id"), data);
+        requires(data,"shift_id", "user_id");
 
         Integer shiftId = data.getInteger("shift_id");
         Long userId = data.getLong("user_id");
@@ -101,9 +99,9 @@ public class ShiftManagementService extends BaseWebActionsService {
 
     private OperationReturnObject makeSwapRequest(JSONObject request) {
         SystemUserModel authenticatedUser = authenticatedUser();
-        requires(List.of("data"), request);
+        requires(request,"data");
         JSONObject data = request.getJSONObject("data");
-        requires(List.of("from_employee", "to_employee", "shift_id"), data);
+        requires(data,"from_employee", "to_employee", "shift_id");
         Long fromEmployee = data.getLong("from_employee");
         Long toEmployee = data.getLong("to_employee");
         Integer shiftId = data.getInteger("shift_id");

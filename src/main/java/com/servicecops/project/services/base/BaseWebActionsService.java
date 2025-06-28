@@ -2,15 +2,10 @@ package com.servicecops.project.services.base;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.config.ApplicationConf;
-import com.servicecops.project.models.database.Institution;
-import com.servicecops.project.models.database.Shift;
-import com.servicecops.project.models.database.SystemRoleModel;
-import com.servicecops.project.models.database.SystemUserModel;
+import com.servicecops.project.models.database.*;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
-import com.servicecops.project.repositories.InstitutionRepository;
-import com.servicecops.project.repositories.ShiftRepository;
-import com.servicecops.project.repositories.SystemRoleRepository;
-import com.servicecops.project.repositories.SystemUserRepository;
+import com.servicecops.project.repositories.*;
+import com.servicecops.project.services.Department.DepartmentService;
 import com.servicecops.project.utils.OperationReturnObject;
 import jakarta.annotation.Nullable;
 import lombok.NonNull;
@@ -41,6 +36,8 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     private InstitutionRepository institutionRepository;
     @Autowired
     private ShiftRepository shiftRepository;
+    @Autowired
+    private DepartmentRepository departmentRepository;
 
 
     public OperationReturnObject process(String action, JSONObject payload) {
@@ -54,25 +51,27 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
      * @param fields  Arraylist<String> - Field Keys to check for.
      * @param request The object to check in
      */
-    public void requires(List<String> fields, JSONObject request) {
-        for (String field : fields) {
-            if (!request.containsKey(field) || request.get(field) == null) {
-                throw new IllegalArgumentException(field.replace("_", " ") + " cannot be empty");
-            }
-        }
-    }
+//    public void requires(List<String> fields, JSONObject request) {
+//        for (String field : fields) {
+//            if (!request.containsKey(field) || request.get(field) == null) {
+//                throw new IllegalArgumentException(field.replace("_", " ") + " cannot be empty");
+//            }
+//        }
+//    }
 
     /**
      * Works as ```requires()``` above, but will check for only one field
      * This will check for one field at a time
      *
-     * @param field   String - The key to look for
+     * @param fields  String - The key to look for
      * @param request JSONObject - The object to check in
      * @return true or false
      */
-    public Boolean requires(String field, JSONObject request) {
-        if (!request.containsKey(field) || request.get(field) == null) {
-            throw new IllegalArgumentException(field.replace("_", " ") + " cannot be empty");
+    public Boolean requires(JSONObject request, String... fields) {
+        for (String field : fields) {
+            if (!request.containsKey(field) || request.get(field) == null) {
+                throw new IllegalArgumentException(field.replace("_", " ") + " cannot be empty");
+            }
         }
         return true;
     }
@@ -302,6 +301,16 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
 
         return shiftRepository.findById(shiftId)
                 .orElseThrow(() -> new IllegalStateException("Shift does not exist"));
+    }
+
+    public Department getDepartment(Long departmentId) {
+        if (departmentId == null) {
+            throw new IllegalArgumentException("Department Id cannot be null");
+        }
+
+        return departmentRepository.findById(departmentId).orElseThrow(
+                () -> new IllegalStateException("Department does not exist")
+        );
     }
 
 }

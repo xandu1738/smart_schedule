@@ -52,9 +52,9 @@ public class DepartmentService extends BaseWebActionsService {
 
   public OperationReturnObject add(JSONObject request) {
     requiresAuth();
-    requires(List.of(Params.DATA.getLabel()), request);
+    requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(List.of(Params.NAME.getLabel(),Params.INSTITUTION_ID.getLabel()), data);
+    requires(data,Params.NAME.getLabel(),Params.INSTITUTION_ID.getLabel());
 
     String departmentName = data.getString(Params.NAME.getLabel());
     Long institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
@@ -83,9 +83,9 @@ public class DepartmentService extends BaseWebActionsService {
 
   public OperationReturnObject getAll(JSONObject request) {
     requiresAuth();
-    requires(List.of(Params.DATA.getLabel()), request);
+    requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(List.of(Params.INSTITUTION_ID.getLabel()), data);
+    requires(data,Params.INSTITUTION_ID.getLabel());
 
     Long institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
 
@@ -111,9 +111,9 @@ public class DepartmentService extends BaseWebActionsService {
   public OperationReturnObject edit(JSONObject request) {
     requiresAuth();
 
-    requires(List.of(Params.DATA.getLabel()), request);
+    requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(List.of(Params.NAME.getLabel(), Params.DEPARTMENT_ID.getLabel()), data);
+    requires(data,Params.NAME.getLabel(), Params.DEPARTMENT_ID.getLabel());
 
     Long departmentid = data.getLong(Params.DEPARTMENT_ID.getLabel());
 
@@ -133,9 +133,9 @@ public class DepartmentService extends BaseWebActionsService {
 
   public OperationReturnObject delete(JSONObject request) {
     requiresAuth();
-    requires(List.of(Params.DATA.getLabel()), request);
+    requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(Params.DEPARTMENT_ID.getLabel(), data);
+    requires(data,Params.DEPARTMENT_ID.getLabel());
 
     Long departmentId = data.getLong(Params.DEPARTMENT_ID.getLabel());
 

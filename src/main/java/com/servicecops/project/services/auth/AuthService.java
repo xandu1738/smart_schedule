@@ -33,10 +33,10 @@ public class AuthService extends BaseWebActionsService {
     private final UserDtoMapper userDtoMapper;
 
     private OperationReturnObject login(JSONObject request) {
-        requires(List.of("data"), request);
+        requires(request,"data");
         JSONObject data = request.getJSONObject("data");
 
-        requires(List.of("email", "password"), data);
+        requires(data,"email", "password");
 
         String email = data.getString("email");
         String password = data.getString("password");
@@ -60,9 +60,9 @@ public class AuthService extends BaseWebActionsService {
     }
 
     private OperationReturnObject signUp(JSONObject request) {
-        requires(List.of("data"), request);
+        requires(request,"data");
         JSONObject data = request.getJSONObject("data");
-        requires(List.of("role", "first_name", "last_name", "email", "password"), data);
+        requires(data,"role", "first_name", "last_name", "email", "password");
         String role = data.getString("role");
         String firstName = data.getString("first_name");
         String lastName = data.getString("last_name");

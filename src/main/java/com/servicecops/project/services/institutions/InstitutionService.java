@@ -51,9 +51,9 @@ public class InstitutionService extends BaseWebActionsService {
 
   public OperationReturnObject save(JSONObject request) {
     requiresAuth();
-    requires(List.of(Params.DATA.getLabel()), request);
+    requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(List.of(Params.NAME.getLabel()), data);
+    requires(data,Params.NAME.getLabel());
 
     String name = data.getString(Params.NAME.getLabel());
     String code = name.replaceAll(" ", "_").toUpperCase();
@@ -105,9 +105,9 @@ public class InstitutionService extends BaseWebActionsService {
   public OperationReturnObject edit(JSONObject request) {
     requiresAuth();
 
-    requires(List.of(Params.DATA.getLabel()), request);
+    requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(List.of(Params.NAME.getLabel(),Params.ID.getLabel()), data);
+    requires(data,Params.NAME.getLabel(),Params.ID.getLabel());
 
     Long institutionId = data.getLong("id");
 
@@ -131,9 +131,9 @@ public class InstitutionService extends BaseWebActionsService {
 
   public OperationReturnObject delete(JSONObject request) {
     requiresAuth();
-    requires(List.of(Params.DATA.getLabel()), request);
+    requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(Params.ID.getLabel(), data);
+    requires(data,Params.ID.getLabel());
     Long institutionId = data.getLong(Params.ID.getLabel());
 
     Institution institution = institutionRepository.findById(institutionId).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));

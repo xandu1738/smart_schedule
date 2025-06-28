@@ -53,7 +53,7 @@ public class AuthService extends BaseWebActionsService {
         response.put("user", userDetails);
 
         OperationReturnObject res = new OperationReturnObject();
-        res.setReturnCodeAndReturnMessage(0, "Welcome back " + userDetails.getUsername());
+        res.setReturnCodeAndReturnMessage(200, "Welcome back " + userDetails.getUsername());
         res.setReturnObject(response);
 
         return res;
@@ -105,7 +105,7 @@ public class AuthService extends BaseWebActionsService {
         systemUserRepository.save(user);
 
         OperationReturnObject res = new OperationReturnObject();
-        res.setReturnCodeAndReturnMessage(0, "User created successfully");
+        res.setReturnCodeAndReturnMessage(200, "User created successfully");
         return res;
     }
 
@@ -122,7 +122,7 @@ public class AuthService extends BaseWebActionsService {
                 .toList();
 
         OperationReturnObject returnObject = new OperationReturnObject();
-        returnObject.setReturnCodeAndReturnMessage(0, "Users list successfully");
+        returnObject.setReturnCodeAndReturnMessage(200, "Users list successfully");
         returnObject.setReturnObject(users);
         return returnObject;
     }
@@ -148,7 +148,7 @@ public class AuthService extends BaseWebActionsService {
         Optional<UserDto> userDto = Optional.of(users).map(userDtoMapper);
 
         OperationReturnObject returnObject = new OperationReturnObject();
-        returnObject.setReturnCodeAndReturnMessage(0, "Users list successfully");
+        returnObject.setReturnCodeAndReturnMessage(200, "Users list successfully");
         returnObject.setReturnObject(userDto);
         return returnObject;
     }

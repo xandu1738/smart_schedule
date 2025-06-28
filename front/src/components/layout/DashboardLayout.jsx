@@ -13,10 +13,10 @@ const DashboardLayout = () => {
 		<div className="h-screen w-screen flex overflow-hidden">
 			{/* <div className="fixed inset-0 bg-black/50 z-40 lg:hidden"></div> */}
 			{/* <div className="fixed left-0 top-0 z-50 h-screen bg-white border-r border-gray-200 transition-all duration-300 w-64"> */}
-			<div className="relative h-screen bg-white border-r border-gray-200 transition-all duration-300 w-64">
+			<div className="floating relative h-screen bg-white border-r border-gray-200 transition-all duration-300 w-64">
 				<div className="flex items-center justify-between p-4 border-b border-gray-200">
 					<div className="w-full flex items-center space-x-2">
-						<div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+						<div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center pointer">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
 								width="24"
@@ -64,23 +64,6 @@ const DashboardLayout = () => {
 							</svg>
 						</div>
 					</div>
-					<button className="lg:hidden p-1 rounded-md hover:bg-gray-100">
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="24"
-							height="24"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							className="lucide lucide-x w-5 h-5"
-						>
-							<path d="M18 6 6 18"></path>
-							<path d="m6 6 12 12"></path>
-						</svg>
-					</button>
 				</div>
 				<nav className="mt-6 px-3">
 					<ul className="space-y-1">

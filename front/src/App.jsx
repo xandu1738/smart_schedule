@@ -8,11 +8,11 @@ import Departments from "./features/departments/Departments.jsx";
 import Institutions from "./features/institutions/Institutions.jsx";
 import Schedules from "./features/schedules/Schedules.jsx";
 import Shift from "./features/shifts/Shift.jsx";
-import { AxiosConfiguration } from "./helpers/axios_helper";
-import { store } from "./helpers/store.js";
+import { store } from "./helpers/redux/store.js";
 
 import React from "react";
 import { Route, Routes } from "react-router";
+import { AxiosConfiguration } from "./helpers/axios/axios_helper.js";
 
 const App = () => {
 	// intiialize services
@@ -20,7 +20,7 @@ const App = () => {
 
 	return (
 		<Routes>
-			<Route index element={<Dashboard />} />
+			<Route index element={<DashboardLayout />} />
 			<Route path={APP_ROUTE.DASHBOARD} element={<DashboardLayout />}>
 				<Route index element={<Dashboard />} />
 				<Route

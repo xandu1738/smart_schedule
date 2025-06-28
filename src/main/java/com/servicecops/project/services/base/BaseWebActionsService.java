@@ -5,7 +5,6 @@ import com.servicecops.project.config.ApplicationConf;
 import com.servicecops.project.models.database.*;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.repositories.*;
-import com.servicecops.project.services.Department.DepartmentService;
 import com.servicecops.project.utils.OperationReturnObject;
 import jakarta.annotation.Nullable;
 import lombok.NonNull;

@@ -5,14 +5,15 @@ import com.servicecops.project.models.jpahelpers.repository.JetRepository;
 import org.springframework.data.domain.Limit;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface DepartmentRepository extends JetRepository<Department, Long> {
 
 
-  Department findByName(String name);
+  Optional<Department> findByName(String name);
 
   boolean existsByName(String name);
 
-  List<Department> findByInstitutionId(Long institutionId);
+  Optional<List<Department>> findByInstitutionId(Long institutionId);
 
 }

@@ -2,6 +2,7 @@ package com.servicecops.project.services;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.*;
+import com.servicecops.project.models.jpahelpers.enums.OffRequestStatus;
 import com.servicecops.project.models.jpahelpers.enums.ShiftSwapStatus;
 import com.servicecops.project.models.jpahelpers.enums.ShitStatus;
 import com.servicecops.project.repositories.ShiftAssignmentRepository;
@@ -185,6 +186,33 @@ public class ShiftManagementService extends BaseWebActionsService {
         return res;
     }
 
+    private OperationReturnObject timeOffRequest(JSONObject request) {
+        SystemUserModel authenticatedUser = authenticatedUser();
+        requires(request, "data");
+        JSONObject data = request.getJSONObject("data");
+        requires(data, "employee_id", "start_date", "end_date");
+        Integer employeeId = data.getInteger("employee_id");
+        String startDate = data.getString("start_date");
+        String endDate = data.getString("end_date");
+        String reason = data.getString("reason");
+
+        //todo: Get Employee
+        TimeOffRequest offRequest = new TimeOffRequest();
+        offRequest.setEmployeeId(employeeId);
+        offRequest.setStartDate(stringToTimestamp(startDate));
+        offRequest.setEndDate(stringToTimestamp(endDate));
+        offRequest.setRequestedOn(getCurrentTimestamp());
+        offRequest.setRequestedBy(authenticatedUser.getId().intValue());
+        offRequest.setReason(reason);
+        offRequest.setStatus(OffRequestStatus.PENDING.name());
+
+        return null;
+    }
+
+    private OperationReturnObject timeOffApproval(JSONObject request) {
+        return null;
+    }
+
     @Transactional
     @Override
     public OperationReturnObject switchActions(String action, JSONObject request) {
@@ -193,6 +221,8 @@ public class ShiftManagementService extends BaseWebActionsService {
             case "assignToShift" -> assignToShift(request);
             case "swapRequest" -> makeSwapRequest(request);
             case "approveSwap" -> approveSwapRequest(request);
+            case "offRequest" -> timeOffRequest(request);
+            case "offApproval" -> timeOffApproval(request);
             default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
         };
     }

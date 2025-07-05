@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Repository
 public interface ShiftSwapRepository extends JpaRepository<ShiftSwapRequest,Integer> {
@@ -55,7 +56,7 @@ public interface ShiftSwapRepository extends JpaRepository<ShiftSwapRequest,Inte
             left join public.system_user sa on sa.id = ssr.approved_by
             where ssr.id = :id
             """, nativeQuery = true)
-    Map<String, Object> getEmployeeSwapRequestById(Integer id);
+    Optional<Map<String, Object>> getEmployeeSwapRequestById(Integer id);
 
     @Query(value = """
             select ssr.id,

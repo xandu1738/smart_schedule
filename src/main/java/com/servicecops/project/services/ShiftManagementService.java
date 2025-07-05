@@ -16,6 +16,7 @@ import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -143,7 +144,11 @@ public class ShiftManagementService extends BaseWebActionsService {
         Integer id = search.getInteger("id");
 
         if (id != null) {
-            Map<String, Object> swapRequest = shiftSwapRepository.getEmployeeSwapRequestById(id);
+            var swapRequest = shiftSwapRepository.getEmployeeSwapRequestById(id);
+
+            if (swapRequest != null && swapRequest.isEmpty()){
+                throw new IllegalStateException("No Swap request matches selected ID");
+            }
 
             OperationReturnObject res = new OperationReturnObject();
             res.setReturnCodeAndReturnMessage(200, "Swap request fetched successfully");

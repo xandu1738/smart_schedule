@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 
 @Getter
@@ -31,7 +32,7 @@ public class Employee {
 
   @ColumnDefault("now()")
   @Column(name = "created_at")
-  private Instant createdAt;
+  private Timestamp createdAt;
 
   @Column(name = "days_off_used", nullable = false)
   private Integer daysOffUsed;
@@ -41,5 +42,11 @@ public class Employee {
 
   @Column(name = "active")
   private boolean active;
+
+  @Column(name = "updated_at")
+  private Timestamp updatedAt;
+
+  @Column(name = "updated_by")
+  private Long updatedBy;
 
 }

@@ -158,6 +158,7 @@
 	</dependencyManagement>
 
 	<build>
+		<finalName>smart-scheduler</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

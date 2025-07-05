@@ -64,7 +64,7 @@ public class InstitutionService extends BaseWebActionsService {
     String name = data.getString(Params.NAME.getLabel());
     String code = name.replaceAll(" ", "_").toUpperCase();
 
-    Institution institution = institutionRepository.findByCode(code);
+    Institution institution = institutionRepository.findByCode(code).orElseThrow();
 
     if (institution != null) {
       throw new IllegalArgumentException("Institution with code " + code + " already exists.");

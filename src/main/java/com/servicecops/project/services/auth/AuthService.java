@@ -90,13 +90,17 @@ public class AuthService extends BaseWebActionsService {
             throw new IllegalArgumentException("Password is required");
         }
 
-        Institution institutionDetails = getInstitution(institution);
-
+        Institution institutionDetails = null;
+        if (!Objects.equals(role, DefaultRoles.SUPER_ADMIN.name())) {
+             institutionDetails = getInstitution(institution);
+        }
         SystemUserModel user = new SystemUserModel();
         user.setFirstName(firstName);
         user.setLastName(lastName);
         user.setEmail(email);
-        user.setInstitutionId(institutionDetails.getId());
+        user.setInstitutionId(
+                institutionDetails != null ? institutionDetails.getId() : null
+        );
         user.setRoleCode(role);
         user.setPassword(passwordEncoder.encode(password));
         user.setCreatedAt(getCurrentTimestamp());

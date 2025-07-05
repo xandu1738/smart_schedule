@@ -1,0 +1,1 @@
+ALTER TABLE employee ALTER COLUMN department TYPE INT USING department::integer;

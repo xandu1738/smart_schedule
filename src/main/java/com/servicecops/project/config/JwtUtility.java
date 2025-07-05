@@ -54,11 +54,12 @@ public class JwtUtility {
      * makes all the previously generated token expired.
      *
      * @param token jwt token
-     * @param username username used when setting up userDetails, for our case, we use username
+     * @param email username used when setting up userDetails, for our case, we use username
      * @return Boolean
      */
-    private boolean isTokenExpired(String token, String username) throws Exception {
-        SystemUserModel usersModel = userRepository.findFirstByUsername(username);
+    private boolean isTokenExpired(String token, String email) throws Exception {
+        SystemUserModel usersModel = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("User not found"));
         if (usersModel == null){
             throw new IllegalStateException("User not found");
         }else if(extractExpiration(token).before(new Date())){
@@ -82,13 +83,14 @@ public class JwtUtility {
         long now = System.currentTimeMillis();
         Timestamp stamp = new Timestamp(now);
 
-        SystemUserModel user = userRepository.findFirstByUsername(userDetails.getUsername());
+        SystemUserModel user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalStateException("User not found"));
 
-        // archived staff members should not login
+        // archived staff members should not log in
         user.setLastLoggedInAt(stamp);
         userRepository.save(user);
         Optional<SystemRoleModel> rolesModel = roleRepository.findFirstByRoleCode(user.getRoleCode());
-        SystemRoleModel role = rolesModel.get();
+        SystemRoleModel role = rolesModel.orElseThrow(() -> new IllegalStateException("User has no role assigned"));
         claims.put("role", role.getRoleName());
         claims.put("role_code", role.getRoleCode());
         claims.put("domain", role.getRoleDomain());

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 
 @Getter
@@ -27,10 +28,13 @@ public class ShiftAssignment {
     private String status;
 
     @Column(name = "assigned_by")
-    private Long assignedBy;
+    private Integer assignedBy;
+
+    @Column(name = "updated_by")
+    private Integer updatedBy;
 
     @ColumnDefault("now()")
     @Column(name = "updated_at")
-    private Instant updatedAt;
+    private Timestamp updatedAt;
 
 }

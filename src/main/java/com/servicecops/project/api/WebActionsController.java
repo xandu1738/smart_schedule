@@ -49,6 +49,10 @@ public class WebActionsController {
         try {
             // let's avoid parsing twice, and parse from here once and for all.
             JSONObject jsonObject = JSON.parseObject(requestBody);
+
+            if (jsonObject == null){
+                jsonObject = new JSONObject();
+            }
             if (!jsonObject.containsKey("SERVICE")){
                 throw new IllegalStateException("SERVICE UNDEFINED");
             } else if (!jsonObject.containsKey("ACTION")) {
@@ -59,6 +63,7 @@ public class WebActionsController {
                 return webActionsService.processAction(service, action, jsonObject);
             }
         } catch (Exception e){
+            e.printStackTrace();
             OperationReturnObject responseWithError = new OperationReturnObject();
             responseWithError.setReturnCodeAndReturnMessage(500, e.getMessage());
             return responseWithError;

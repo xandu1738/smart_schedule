@@ -12,4 +12,5 @@
   <include file="/changes/some_addons.sql" relativeToChangelogFile="true"/>
   <include file="/changes/employee/change_department_column_to_int.sql" relativeToChangelogFile="true"/>
   <include file="/changes/employee/add_updated_by_updated_on_to_employee_table.sql" relativeToChangelogFile="true"/>
+  <include file="/changes/partitioning_schedule_record.sql" relativeToChangelogFile="true"/>
 </databaseChangeLog>

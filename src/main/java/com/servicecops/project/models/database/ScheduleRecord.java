@@ -24,11 +24,11 @@ public class ScheduleRecord {
     @Column(name = "employee_id", nullable = false)
     private Integer employeeId;
 
-    @Column(name = "shift_id", nullable = false)
+    @Column(name = "shift_id", nullable = true)
     private Integer shiftId;
 
-    @Column(name = "time_off_id", nullable = false)
-    private Integer timeOffId;
+    @Column(name = "time_off_request_id", nullable = true)
+    private Integer timeOffRequestId;
 
     @Column(name = "start_time", nullable = false)
     private Timestamp startTime;
@@ -36,11 +36,9 @@ public class ScheduleRecord {
     @Column(name = "end_time", nullable = false)
     private Timestamp endTime;
 
-    @CreationTimestamp
     @Column(name = "date_created", nullable = false)
     private Timestamp dateCreated;
 
-    @UpdateTimestamp
     @Column(name = "date_updated", nullable = false)
     private Timestamp dateUpdated;
 

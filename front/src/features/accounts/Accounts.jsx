@@ -1,30 +1,83 @@
 import AddButton from "../../components/AddButton";
+import Table from "../../components/Table";
 import { useGetAllAccountsQuery } from "../../helpers/redux/slices/extendedApis/accountsApi";
+import { formatText } from "../../helpers/utils";
+import { Tag } from "primereact/tag";
+
+
+{/* <Tag value="Primary"></Tag>
+<Tag severity="success" value="Success"></Tag>
+<Tag severity="info" value="Info"></Tag>
+<Tag severity="warning" value="Warning"></Tag>
+<Tag severity="danger" value="Danger"></Tag>
+<Tag severity="secondary" value="Secondary"></Tag>
+<Tag severity="contrast" value="Contrast"></Tag> */}
+const getActiveBadge = (isActive) => {
+    return (
+        <Tag severity={isActive ? "success" : "danger"} value={isActive ? "Active" : "Inactive"} />
+    );
+};
 
 const Accounts = () => {
     const { data: { data: accounts } = { data: [] }, isLoading, error } = useGetAllAccountsQuery()
 
+    console.log(accounts)
+    // {
+    //     "id": 2,
+    //     "institution": null,
+    //     "firstName": "Destiny",
+    //     "lastName": "Graham",
+    //     "email": "Lizzie.Maggio35@yahoo.com",
+    //     "roleCode": "SUPER_ADMIN",
+    //     "createdAt": "2025-07-12T07:23:29.202+00:00",
+    //     "lastLoggedInAt": "2025-07-12T09:58:51.037+00:00",
+    //     "isActive": true,
+    //     "username": "Lizzie.Maggio35@yahoo.com"
+    // }
     return (
-        <div className="m-8">
+        <div className="m-8 flex flex-col gap-4">
             <section className="flex flex-row items-center justify-between">
-            <div className="flex flex-col items-start justify-start left-0 w-full">
-                <h1 className="font-bold text-3xl">Accounts</h1>
-                <p className="text-sm text-gray-500 pt-2">
-                Manage user accounts
-                </p>
-            </div>
-            <div>
-                <AddButton onClick={() => {}} buttonName={"Add Account"} />
-            </div>
+                <div className="flex flex-col items-start justify-start left-0 w-full">
+                    <h1 className="font-bold text-3xl">Accounts</h1>
+                    <p className="text-sm text-gray-500 pt-2">
+                        Manage user accounts
+                    </p>
+                </div>
+                <div>
+                    <AddButton onClick={() => { }} buttonName={"Add Account"} />
+                </div>
             </section>
-            <section className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {accounts?.map((account) => (
-                    <div key={account?.id} className="bg-white rounded-lg shadow-md p-4">
-                        <h2 className="font-bold text-lg">{account?.name}</h2>
-                        <p className="text-sm text-gray-500">{account?.email}</p>
-                    </div>
-                ))}
-            </section>
+            <Table
+                data={accounts}
+                columns={[
+                    // { field: "id", header: "ID" },
+                    { field: "firstName", header: "First Name"},
+                    { field: "lastName", header: "Last Name" },
+                    { field: "email", header: "Email" },
+                    { field: "username", header: "Username" },
+                    { field: "roleCode", header: "Role", sortable: false, body: (data) => formatText(data?.roleCode) },
+                    // { field: "createdAt", header: "Created On" },
+                    // { field: "lastLoggedInAt", header: "Last Logged In" },
+                    { field: "isActive", header: "Active", sortable: false, body: (data) => getActiveBadge(data?.isActive) },
+                ]}
+                rowActions={[
+                    {
+                        icon: "Eye",
+                        tooltip: "View",
+                        onClick: (data) => {
+                            console.log(data)
+                        }
+                    },
+                    {
+                        icon: "Trash2",
+                        tooltip: "Delete",
+                        onClick: (data) => {
+                            console.log(data)
+                        }
+                    }
+                ]}
+                index={accounts?.length}
+            />
         </div>
     );
 };

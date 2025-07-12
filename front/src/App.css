@@ -4,3 +4,122 @@
   margin: 0 auto;
   text-align: center;
 }
+
+
+/* Table shell */
+.p-datatable-table {
+    border-collapse: collapse;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  /* Header styling */
+  .p-datatable-thead th {
+    background: #f5f7fa;
+    color: #333;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  
+  /* Hovered header for sorting */
+  .p-sortable-column:hover {
+    /* background-color: #eef2ff;
+    color: #1d4ed8; */
+  }
+  
+  /* Active sort state */
+  .p-sortable-column.p-highlight {
+    color: #1d4ed8;
+    font-weight: 700;
+  }
+
+  .p-datatable-tbody tr td {
+    padding: 0.6rem;
+    color: #646464;
+    border-bottom: 2px solid #e5e7eb;
+    font-size: 14px;
+  }
+  
+  
+  /* Row hover effect */
+  .p-datatable-tbody > tr:hover {
+    background-color: #f0f9ff;
+    transition: all 0.2s ease;
+  }
+  
+  /* Checkbox column */
+  .p-selection-column {
+    width: 2.5rem;
+  }
+  
+  /* Header content spacing */
+  .p-column-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+/* paginator wrapper */
+.p-paginator {
+    @apply flex justify-center items-center gap-2 mt-6;
+  }
+  
+  /* shared button styles */
+  .p-paginator-element {
+    @apply inline-flex items-center justify-center w-9 h-9 rounded-sm text-xs font-medium transition-all duration-150;
+    background-color: #f9fafb;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .p-paginator-element:hover:not(.p-disabled):not(.p-highlight) {
+    background-color: #eef2ff;
+    color: #4770e0;
+    border-color: #c7d2fe;
+  }
+  
+  /* current page */
+  .p-paginator-page.p-highlight {
+    background-color: #4770e0;
+    color: #fff;
+    font-weight: 600;
+    border-color: #4770e0;
+  }
+  
+  /* disabled state */
+  .p-paginator-element.p-disabled {
+    opacity: 40;
+    cursor: not-allowed;
+  }
+  
+  /* nav icons */
+  .p-paginator-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+  
+  /* round icons too */
+  .p-paginator-prev,
+  .p-paginator-next,
+  .p-paginator-first,
+  .p-paginator-last {
+    border-radius: 50%;
+  }
+  
+  /* tag styles */
+  .p-tag {
+    @apply inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-sm;
+  }
+
+  .p-tag.p-tag-success {
+    @apply bg-green-100 text-green-800 border border-green-200;
+  }
+
+  .p-tag.p-tag-danger {
+    @apply bg-red-100 text-red-800 border border-red-200;
+  }
+    
+  .p-tag.p-tag-warning {
+    @apply bg-yellow-100 text-yellow-800 border border-yellow-200;
+  }

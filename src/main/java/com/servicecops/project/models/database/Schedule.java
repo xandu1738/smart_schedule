@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 
 @Getter
@@ -18,10 +19,10 @@ public class Schedule {
     private Integer id;
 
     @Column(name = "start_date", nullable = false)
-    private Instant startDate;
+    private Timestamp startDate;
 
     @Column(name = "end_date", nullable = false)
-    private Instant endDate;
+    private Timestamp endDate;
 
     @Column(name = "department_id", nullable = false)
     private Integer departmentId;

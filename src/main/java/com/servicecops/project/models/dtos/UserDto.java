@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 
 public record UserDto(
         Long id,
-        Integer institutionId,
+        String institution,
         String firstName,
         String lastName,
         String email,

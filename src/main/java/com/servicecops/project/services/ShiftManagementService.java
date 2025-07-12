@@ -11,6 +11,7 @@ import com.servicecops.project.repositories.ShiftSwapRepository;
 import com.servicecops.project.repositories.TimeOffRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
+import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -135,40 +136,44 @@ public class ShiftManagementService extends BaseWebActionsService {
     }
 
     private OperationReturnObject getSwapRequests(JSONObject request) {
-        requiresAuth();
-        JSONObject search = request.getJSONObject("search");
-        if (search == null) {
-            search = new JSONObject();
-        }
-        Integer employeeId = search.getInteger("from_employee");
-        Integer id = search.getInteger("id");
+        try {
+            requiresAuth();
+            JSONObject search = request.getJSONObject("search");
+            if (search == null) {
+                search = new JSONObject();
+            }
+            Integer employeeId = search.getInteger("from_employee");
+            Integer id = search.getInteger("id");
 
-        if (id != null) {
-            var swapRequest = shiftSwapRepository.getEmployeeSwapRequestById(id);
+            if (id != null) {
+                var swapRequest = shiftSwapRepository.getEmployeeSwapRequestById(id);
 
-            if (swapRequest != null && swapRequest.isEmpty()){
-                throw new IllegalStateException("No Swap request matches selected ID");
+                if (swapRequest != null && swapRequest.isEmpty()){
+                    throw new IllegalStateException("No Swap request matches selected ID");
+                }
+
+                OperationReturnObject res = new OperationReturnObject();
+                res.setReturnCodeAndReturnMessage(200, "Swap request fetched successfully");
+                res.setReturnObject(swapRequest);
+                return res;
             }
 
             OperationReturnObject res = new OperationReturnObject();
-            res.setReturnCodeAndReturnMessage(200, "Swap request fetched successfully");
-            res.setReturnObject(swapRequest);
-            return res;
-        }
+            List<Map<String, Object>> swapRequests;
+            if (employeeId != null) {
+                swapRequests = shiftSwapRepository.getEmployeeSwapRequests(employeeId);
+                res.setReturnCodeAndReturnMessage(200, "Swap requests fetched successfully");
+                res.setReturnObject(swapRequests);
+                return res;
+            }
 
-        OperationReturnObject res = new OperationReturnObject();
-        List<Map<String, Object>> swapRequests;
-        if (employeeId != null) {
-            swapRequests = shiftSwapRepository.getEmployeeSwapRequests(employeeId);
+            swapRequests = shiftSwapRepository.getAllSwapRequests();
             res.setReturnCodeAndReturnMessage(200, "Swap requests fetched successfully");
             res.setReturnObject(swapRequests);
             return res;
+        } catch (AuthorizationRequiredException e) {
+            throw new RuntimeException(e.getMessage());
         }
-
-        swapRequests = shiftSwapRepository.getAllSwapRequests();
-        res.setReturnCodeAndReturnMessage(200, "Swap requests fetched successfully");
-        res.setReturnObject(swapRequests);
-        return res;
     }
 
     @Transactional
@@ -301,26 +306,30 @@ public class ShiftManagementService extends BaseWebActionsService {
     }
 
     private OperationReturnObject getTimeOffRequests(JSONObject request) {
-        requiresAuth();
-        JSONObject search = request.getJSONObject("search");
-        if (search == null) {
-            search = new JSONObject();
-        }
-        Integer employee_id = search.getInteger("employee_id");
+        try {
+            requiresAuth();
+            JSONObject search = request.getJSONObject("search");
+            if (search == null) {
+                search = new JSONObject();
+            }
+            Integer employee_id = search.getInteger("employee_id");
 
-        OperationReturnObject res = new OperationReturnObject();
-        List<Map<String, Object>> timeOffRequests;
-        if (employee_id != null) {
-            timeOffRequests = timeOffRepository.getEmployeeTimeOffRequests(employee_id);
+            OperationReturnObject res = new OperationReturnObject();
+            List<Map<String, Object>> timeOffRequests;
+            if (employee_id != null) {
+                timeOffRequests = timeOffRepository.getEmployeeTimeOffRequests(employee_id);
+                res.setReturnCodeAndReturnMessage(200, "Time off requests fetched successfully");
+                res.setReturnObject(timeOffRequests);
+                return res;
+            }
+
+            timeOffRequests = timeOffRepository.getTimeOffRequests();
             res.setReturnCodeAndReturnMessage(200, "Time off requests fetched successfully");
             res.setReturnObject(timeOffRequests);
             return res;
+        } catch (AuthorizationRequiredException e) {
+            throw new RuntimeException(e.getMessage());
         }
-
-        timeOffRequests = timeOffRepository.getTimeOffRequests();
-        res.setReturnCodeAndReturnMessage(200, "Time off requests fetched successfully");
-        res.setReturnObject(timeOffRequests);
-        return res;
     }
 
     private OperationReturnObject myTimeOffRequests(JSONObject request) {

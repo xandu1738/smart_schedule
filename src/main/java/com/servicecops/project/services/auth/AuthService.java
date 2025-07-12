@@ -4,22 +4,24 @@ import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.config.ApplicationConf;
 import com.servicecops.project.config.JwtUtility;
 import com.servicecops.project.models.database.Institution;
+import com.servicecops.project.models.database.SystemRolePermissionAssignmentModel;
 import com.servicecops.project.models.database.SystemUserModel;
 import com.servicecops.project.models.dtos.UserDto;
 import com.servicecops.project.models.dtos.mapper.UserDtoMapper;
 import com.servicecops.project.models.jpahelpers.enums.DefaultRoles;
+import com.servicecops.project.repositories.SystemRolePermissionRepository;
 import com.servicecops.project.repositories.SystemUserRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
+import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
 import java.util.*;
 
 @RequiredArgsConstructor
@@ -31,38 +33,52 @@ public class AuthService extends BaseWebActionsService {
     private final PasswordEncoder passwordEncoder;
     private final SystemUserRepository systemUserRepository;
     private final UserDtoMapper userDtoMapper;
+    private final SystemRolePermissionRepository systemRolePermissionRepository;
 
     private OperationReturnObject login(JSONObject request) {
-        requires(request,"data");
+        requires(request, "data");
         JSONObject data = request.getJSONObject("data");
 
-        requires(data,"email", "password");
+        OperationReturnObject res = new OperationReturnObject();
+
+        requires(data, "email", "password");
 
         String email = data.getString("email");
         String password = data.getString("password");
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
+            );
+        } catch (AuthenticationException e) {
+            res.setReturnCodeAndReturnMessage(401, "Invalid email or password");
+            return res;
+        }
 
         final SystemUserModel userDetails = userDetailService.loadUserByUsername(email);
-        final String token = jwtUtility.generateToken(userDetails);
+        final String accessToken = jwtUtility.generateAccessToken(userDetails, "ACCESS");
+        final String refreshToken = jwtUtility.generateAccessToken(userDetails, "REFRESH");
 
+        UserDto profile = userDtoMapper.apply(userDetails);
+
+        //For consistency with other user querying calls
+        List<Map<String, Object>> permission = systemRolePermissionRepository.findPermissionsByRoleCode(userDetails.getRoleCode());
         Map<String, Object> response = new HashMap<>();
-        response.put("accessToken", token); // this is the jwt token the user can user from now on.
-        response.put("user", userDetails);
-
-        OperationReturnObject res = new OperationReturnObject();
+        response.put("accessToken", accessToken); // this is the jwt token the user can user from now on.
+        response.put("refreshToken", refreshToken); // this is the jwt token the user can user from now on.
+        response.put("user", profile);
+        response.put("permissions", permission);
         res.setReturnCodeAndReturnMessage(200, "Welcome back " + userDetails.getUsername());
         res.setReturnObject(response);
 
         return res;
     }
 
-    private OperationReturnObject signUp(JSONObject request) {
-        requires(request,"data");
+    private OperationReturnObject signUp(JSONObject request) throws AuthorizationRequiredException {
+        requiresAuth();
+        requires(request, "data");
         JSONObject data = request.getJSONObject("data");
-        requires(data,"role", "first_name", "last_name", "email", "password");
+        requires(data, "role", "first_name", "last_name", "email", "password");
         String role = data.getString("role");
         String firstName = data.getString("first_name");
         String lastName = data.getString("last_name");
@@ -92,7 +108,7 @@ public class AuthService extends BaseWebActionsService {
 
         Institution institutionDetails = null;
         if (!Objects.equals(role, DefaultRoles.SUPER_ADMIN.name())) {
-             institutionDetails = getInstitution(institution);
+            institutionDetails = getInstitution(institution);
         }
         SystemUserModel user = new SystemUserModel();
         user.setFirstName(firstName);
@@ -113,17 +129,16 @@ public class AuthService extends BaseWebActionsService {
         return res;
     }
 
-    private OperationReturnObject usersList(JSONObject request){
+    private OperationReturnObject usersList(JSONObject request) throws AuthorizationRequiredException {
         requiresAuth();
         JSONObject search = request.getJSONObject("search");
 
-        if(search == null){
+        if (search == null) {
             search = new JSONObject();
         }
 
-        List<UserDto> users = systemUserRepository.findAll().stream()
-                .map(userDtoMapper)
-                .toList();
+//        List<Map<String,Object>> users = systemUserRepository.findAllUsers();
+        List<UserDto> users = systemUserRepository.findAll().stream().map(userDtoMapper).toList();
 
         OperationReturnObject returnObject = new OperationReturnObject();
         returnObject.setReturnCodeAndReturnMessage(200, "Users list successfully");
@@ -131,25 +146,25 @@ public class AuthService extends BaseWebActionsService {
         return returnObject;
     }
 
-    private OperationReturnObject usersProfile(JSONObject request){
+    private OperationReturnObject usersProfile(JSONObject request) throws AuthorizationRequiredException {
         requiresAuth();
         JSONObject search = request.getJSONObject("search");
 
-        if(search == null){
+        if (search == null) {
             search = new JSONObject();
         }
 
         Long id = search.getLong("id");
-        if (id == null){
+        if (id == null) {
             throw new IllegalStateException("Please specify user's ID");
         }
 
-        var users = systemUserRepository.findById(id)
+        var user = systemUserRepository.findById(id)
                 .orElseThrow(
                         () -> new IllegalFormatFlagsException("User profile does not exist")
                 );
 
-        Optional<UserDto> userDto = Optional.of(users).map(userDtoMapper);
+        UserDto userDto = userDtoMapper.apply(user);
 
         OperationReturnObject returnObject = new OperationReturnObject();
         returnObject.setReturnCodeAndReturnMessage(200, "Users list successfully");
@@ -158,7 +173,7 @@ public class AuthService extends BaseWebActionsService {
     }
 
     @Override
-    public OperationReturnObject switchActions(String action, JSONObject request) {
+    public OperationReturnObject switchActions(String action, JSONObject request) throws AuthorizationRequiredException {
         return switch (action) {
             case "login" -> login(request);
             case "register" -> signUp(request);

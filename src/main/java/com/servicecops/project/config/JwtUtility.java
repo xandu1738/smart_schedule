@@ -31,16 +31,21 @@ public class JwtUtility {
     private String secret;
 
     public static final long JWT_TOKEN_VALIDITY = 12 * 60 * 60;
+
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public Date extractIssuedAt(String token){
+    public Date extractIssuedAt(String token) {
         return extractClaim(token, Claims::getIssuedAt);
     }
 
-    public String generateToken(UserDetails userDetails){
-        return generateToken(new HashMap<>(), userDetails);
+    public String generateAccessToken(UserDetails userDetails, String tokenType) {
+        return switch (tokenType) {
+            case "ACCESS" -> generateAccessToken(new HashMap<>(), userDetails);
+            case "REFRESH" -> generateRefreshToken(new HashMap<>(), userDetails);
+            default -> throw new IllegalArgumentException("Invalid token type");
+        };
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) throws Exception {
@@ -49,26 +54,25 @@ public class JwtUtility {
     }
 
     /**
-     * @implNote Will check for two things, if the token is expired as per eat claim
-     * and will also check of the user has already requested for another token, requesting for another token
-     * makes all the previously generated token expired.
-     *
      * @param token jwt token
      * @param email username used when setting up userDetails, for our case, we use username
      * @return Boolean
+     * @implNote Will check for two things, if the token is expired as per eat claim
+     * and will also check of the user has already requested for another token, requesting for another token
+     * makes all the previously generated token expired.
      */
     private boolean isTokenExpired(String token, String email) throws Exception {
         SystemUserModel usersModel = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User not found"));
-        if (usersModel == null){
+        if (usersModel == null) {
             throw new IllegalStateException("User not found");
-        }else if(extractExpiration(token).before(new Date())){
+        } else if (extractExpiration(token).before(new Date())) {
             throw new Exception("SESSION EXPIRED");
         } else if (usersModel.getLastLoggedInAt() == null) {
             throw new IllegalStateException("INVALID TOKEN");
         } else if (extractIssuedAt(token).after(usersModel.getLastLoggedInAt())) {
             throw new Exception("EXPIRED TOKEN USED");
-        } else if (!usersModel.getIsActive()){
+        } else if (!usersModel.getIsActive()) {
             throw new Exception("ACCOUNT INACTIVE");
         }
         return false;
@@ -78,7 +82,7 @@ public class JwtUtility {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public String generateToken(Map<String, Object> claims, UserDetails userDetails){
+    public String generateAccessToken(Map<String, Object> claims, UserDetails userDetails) {
         // truck the last time the token was generated -- the last time the user logged in
         long now = System.currentTimeMillis();
         Timestamp stamp = new Timestamp(now);
@@ -92,11 +96,13 @@ public class JwtUtility {
         Optional<SystemRoleModel> rolesModel = roleRepository.findFirstByRoleCode(user.getRoleCode());
         SystemRoleModel role = rolesModel.orElseThrow(() -> new IllegalStateException("User has no role assigned"));
         claims.put("role", role.getRoleName());
+        claims.put("type", role.getRoleName());
+        claims.put("tokenType", "ACCESS");
         claims.put("role_code", role.getRoleCode());
         claims.put("domain", role.getRoleDomain());
         List<String> permissions = new ArrayList<>();
-        for (GrantedAuthority authority: userDetails.getAuthorities()){
-            if (!permissions.contains(authority.getAuthority())){
+        for (GrantedAuthority authority : userDetails.getAuthorities()) {
+            if (!permissions.contains(authority.getAuthority())) {
                 permissions.add(authority.getAuthority());
             }
         }
@@ -106,17 +112,35 @@ public class JwtUtility {
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(user.getLastLoggedInAt())
-                .setExpiration(new Date(now+ JWT_TOKEN_VALIDITY *1000))
+                .setExpiration(new Date(now + JWT_TOKEN_VALIDITY * 1000))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver){
+    public String generateRefreshToken(Map<String, Object> claims, UserDetails userDetails) {
+        long now = System.currentTimeMillis();
+
+        SystemUserModel user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+
+        claims.put("user", user.getUsername());
+        claims.put("tokenType", "REFRESH");
+        return Jwts
+                .builder()
+                .setClaims(claims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(user.getLastLoggedInAt())
+                .setExpiration(new Date(now + JWT_TOKEN_VALIDITY * 1000))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token){
+    private Claims extractAllClaims(String token) {
         return Jwts
                 .parserBuilder()
                 .setSigningKey(getSigningKey())

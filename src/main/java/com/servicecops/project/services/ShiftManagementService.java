@@ -4,11 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.*;
 import com.servicecops.project.models.jpahelpers.enums.OffRequestStatus;
 import com.servicecops.project.models.jpahelpers.enums.ShiftSwapStatus;
-import com.servicecops.project.models.jpahelpers.enums.ShitStatus;
-import com.servicecops.project.repositories.ShiftAssignmentRepository;
-import com.servicecops.project.repositories.ShiftRepository;
-import com.servicecops.project.repositories.ShiftSwapRepository;
-import com.servicecops.project.repositories.TimeOffRepository;
+import com.servicecops.project.repositories.*;
 import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
 import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
@@ -27,13 +23,15 @@ public class ShiftManagementService extends BaseWebActionsService {
     private final ShiftSwapRepository shiftSwapRepository;
     private final ShiftRepository shiftRepository;
     private final TimeOffRepository timeOffRepository;
+    private final ScheduleRecordRepository scheduleRecordRepository;
 
-    public ShiftManagementService(ShiftAssignmentRepository shiftAssignmentRepository, ShiftSwapRepository shiftSwapRepository, ShiftRepository shiftRepository, TimeOffRepository timeOffRepository) {
+    public ShiftManagementService(ShiftAssignmentRepository shiftAssignmentRepository, ShiftSwapRepository shiftSwapRepository, ShiftRepository shiftRepository, TimeOffRepository timeOffRepository, ScheduleRecordRepository scheduleRecordRepository) {
         super();
         this.shiftAssignmentRepository = shiftAssignmentRepository;
         this.shiftSwapRepository = shiftSwapRepository;
         this.shiftRepository = shiftRepository;
         this.timeOffRepository = timeOffRepository;
+        this.scheduleRecordRepository = scheduleRecordRepository;
     }
 
     private OperationReturnObject createShift(JSONObject request) {
@@ -77,8 +75,9 @@ public class ShiftManagementService extends BaseWebActionsService {
         return res;
     }
 
-    private OperationReturnObject assignEmployeesToShift(JSONObject request) {
-        SystemUserModel authenticatedUser = authenticatedUser();
+    private OperationReturnObject assignEmployeesToShift(JSONObject request) throws AuthorizationRequiredException {
+//        SystemUserModel authenticatedUser = authenticatedUser();
+        requiresAuth();
         requires(request, "data");
         JSONObject data = request.getJSONObject("data");
 
@@ -121,7 +120,8 @@ public class ShiftManagementService extends BaseWebActionsService {
 
                     scheduleRecords.forEach(sr -> {
                        sr.setShiftId(shiftId);
-                       //todo: save schedule record with shift ID
+                       sr.setDateUpdated(getCurrentTimestamp());
+                       scheduleRecordRepository.save(sr);
                     });
                 } catch (AuthorizationRequiredException e) {
                     throw new RuntimeException(e.getMessage());

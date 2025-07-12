@@ -10,6 +10,7 @@ import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../helpers/redux/slices/authSlice";
 import { authApi } from "../../helpers/redux/slices/extendedApis/authApi";
 import { APP_CONFIG } from "../../config/app.config";
+import Button from "../../components/Button";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -46,14 +47,14 @@ export default function SignIn() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-lg border bg-card text-card-foreground shadow-sm">
+      <div className="w-full max-w-md rounded-lg bg-card text-card-foreground shadow-lg bg-white">
         <div className="text-center flex flex-col space-y-1.5 p-6">
           <div className="flex items-center justify-center mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
-              <div className="w-7 h-7 text-white text-2xl font-semibold leading-none tracking-tight" />
+              <Calendar className="w-7 h-7 text-white" />
             </div>
           </div>
-          <div className="text-2xl font-bold text-2xl font-semibold leading-none tracking-tight">Welcome back</div>
+          <div className="text-2xl font-bold leading-none tracking-tight">Welcome back</div>
           <div className="text-sm text-muted-foreground">
             Sign in to your {APP_CONFIG.TITLE} account
           </div>
@@ -61,7 +62,7 @@ export default function SignIn() {
         <div className="p-6 pt-0">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email" className="flex justify-start">Email</label>
               <input
                 id="email"
                 name="email"
@@ -74,14 +75,14 @@ export default function SignIn() {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="password" className="flex justify-start">Password</label>
               <div className="relative">
                 <input
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-                    placeholder="Enter your password"
+                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleInputChange}
                   required
@@ -104,9 +105,7 @@ export default function SignIn() {
                 Forgot password?
               </Link>
             </div>
-            <button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-              Sign In
-            </button>
+            <Button  type={"submit"} buttonName={"Sign In"} onClick={() => {}} className={"w-full"} />
           </form>
           <div className="mt-6 text-center text-sm">
             <span className="text-gray-600">Don't have an account? </span>

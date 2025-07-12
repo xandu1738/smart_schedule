@@ -11,6 +11,7 @@ public interface DepartmentRepository extends JetRepository<Department, Long> {
 
 
   Optional<Department> findByName(String name);
+  Optional<Department> findByNameAndInstitutionId(String departmentName, Long institutionId);
 
   boolean existsByName(String name);
 

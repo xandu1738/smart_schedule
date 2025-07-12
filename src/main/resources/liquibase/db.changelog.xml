@@ -10,16 +10,10 @@
   <include file="/changes/user_onboarding.sql" relativeToChangelogFile="true"/>
   <include file="/changes/adding_soft_deletes_to_all_entities.sql" relativeToChangelogFile="true"/>
   <include file="/changes/add_schedule_record_table_and_schedule_entity_updates.sql" relativeToChangelogFile="true"/>
-
-
-
-  <include file="/changes/some_addons.sql" relativeToChangelogFile="true"/>
-  <include file="/changes/add_schedule_record_table_and_schedule_entity_updates.sql" relativeToChangelogFile="true"/>
-
-
-
   <include file="/changes/some_addons.sql" relativeToChangelogFile="true"/>
   <include file="/changes/employee/change_department_column_to_int.sql" relativeToChangelogFile="true"/>
   <include file="/changes/employee/add_updated_by_updated_on_to_employee_table.sql" relativeToChangelogFile="true"/>
   <include file="/changes/partitioning_schedule_record.sql" relativeToChangelogFile="true"/>
+  <include file="/changes/updates_intstitution_entity.sql" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

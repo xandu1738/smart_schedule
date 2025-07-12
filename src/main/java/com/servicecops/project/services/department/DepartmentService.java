@@ -2,7 +2,9 @@ package com.servicecops.project.services.department;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.Department;
+import com.servicecops.project.models.database.Institution;
 import com.servicecops.project.repositories.DepartmentRepository;
+import com.servicecops.project.repositories.InstitutionRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
 import lombok.Getter;
@@ -18,6 +20,7 @@ import java.util.List;
 public class DepartmentService extends BaseWebActionsService {
 
   private final DepartmentRepository departmentRepository;
+  private final InstitutionRepository institutionRepository;
 
   @RequiredArgsConstructor
   @Getter
@@ -59,9 +62,15 @@ public class DepartmentService extends BaseWebActionsService {
     String departmentName = data.getString(Params.NAME.getLabel());
     Long institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
 
-    Department department = departmentRepository.findByName(departmentName).orElseThrow(() -> new IllegalArgumentException("Department not found with id: "));;
+    Institution institution = institutionRepository.findById(institutionId).orElse(null);
+    Department department = departmentRepository.findByNameAndInstitutionId(departmentName, institutionId)
+        .orElse(null);
 
-    if (department != null) {
+    if (institution == null) {
+      throw new IllegalArgumentException("institution not found with id: " + institutionId);
+    }
+
+    if (institution != null && department != null) {
       throw new IllegalArgumentException("department with name " + departmentName + " already exists.");
     }
 

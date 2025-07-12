@@ -1,6 +1,6 @@
 package com.servicecops.project.utils.exceptions.handler;
 import com.servicecops.project.utils.OperationReturnObject;
-import com.servicecops.project.utils.exceptions.ExpiredOtpException;
+import com.servicecops.project.utils.exceptions.ExpiredJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.TypeMismatchException;
 import org.springframework.http.HttpStatus;
@@ -47,8 +47,8 @@ public class CustomExceptionHandler {
         return oro;
     }
 
-    @ExceptionHandler(value = ExpiredOtpException.class)
-    private OperationReturnObject expiredOtp(ExpiredOtpException e) {
+    @ExceptionHandler(value = ExpiredJwtException.class)
+    private OperationReturnObject expiredOtp(ExpiredJwtException e) {
         e.printStackTrace();
         OperationReturnObject oro = new OperationReturnObject();
         oro.setReturnCodeAndReturnMessage(460, e.getMessage());

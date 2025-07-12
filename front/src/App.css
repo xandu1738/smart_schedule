@@ -5,6 +5,10 @@
   text-align: center;
 }
 
+main {
+    @apply overflow-y-auto;
+}
+
 
 /* Table shell */
 .p-datatable-table {
@@ -110,6 +114,10 @@
   /* tag styles */
   .p-tag {
     @apply inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-sm;
+  }
+
+  .p-tag {
+    @apply bg-gray-100 text-gray-800 border border-gray-200;
   }
 
   .p-tag.p-tag-success {

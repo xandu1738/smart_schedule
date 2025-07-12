@@ -1,8 +1,8 @@
 import AddButton from "../../components/AddButton";
+import { getActiveBadge } from "../../components/Badge";
 import Table from "../../components/Table";
 import { useGetAllAccountsQuery } from "../../helpers/redux/slices/extendedApis/accountsApi";
 import { formatText } from "../../helpers/utils";
-import { Tag } from "primereact/tag";
 
 
 {/* <Tag value="Primary"></Tag>
@@ -12,11 +12,7 @@ import { Tag } from "primereact/tag";
 <Tag severity="danger" value="Danger"></Tag>
 <Tag severity="secondary" value="Secondary"></Tag>
 <Tag severity="contrast" value="Contrast"></Tag> */}
-const getActiveBadge = (isActive) => {
-    return (
-        <Tag severity={isActive ? "success" : "danger"} value={isActive ? "Active" : "Inactive"} />
-    );
-};
+
 
 const Accounts = () => {
     const { data: { data: accounts } = { data: [] }, isLoading, error } = useGetAllAccountsQuery()

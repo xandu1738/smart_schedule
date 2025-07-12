@@ -107,7 +107,7 @@ export default function Table({
 
                 <Toast ref={(el) => (window.toast = el)} />
                 <DataTable
-                    className="overflow-hidden"
+                    className=""
                     ref={tableRef}
                     value={data}
                     paginator={paginator}
@@ -136,13 +136,15 @@ export default function Table({
                             key={idx}
                             field={col.field}
                             header={col.header}
-                            sortable={col.sortable ?? true}
+                            sortable={col.sortable}
                             // filter={col.filter ?? true}
                             editor={editable ? col.editor : undefined}
                             body={col.body}
                             style={{
+                                ...col.style,
                                 textAlign: "start",
                                 width: col.style?.width ?? 'auto',
+                                
                             }}
                         />
                     ))}

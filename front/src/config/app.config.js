@@ -11,4 +11,10 @@ export const SERVICES = {
             USERS_LIST: "usersList"
         }
     },
+    INSTITUTION: {
+        name: "Institution",
+        ACTION: {
+            GET_ALL: "getAll"
+        }
+    }
 }

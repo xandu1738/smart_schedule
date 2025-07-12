@@ -1,5 +1,6 @@
 package com.servicecops.project.models.database;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,6 +32,7 @@ public class SystemUserModel implements UserDetails {
     @Column(name = "last_name")
     private String lastName;
     @Basic
+    @JsonIgnore
     @Column(name = "password")
     private String password;
     @Basic

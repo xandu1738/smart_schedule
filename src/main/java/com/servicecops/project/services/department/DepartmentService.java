@@ -7,6 +7,7 @@ import com.servicecops.project.repositories.DepartmentRepository;
 import com.servicecops.project.repositories.InstitutionRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
+import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,7 @@ public class DepartmentService extends BaseWebActionsService {
 
 
   @Override
-  public OperationReturnObject switchActions(String action, JSONObject request) {
+  public OperationReturnObject switchActions(String action, JSONObject request) throws AuthorizationRequiredException {
     return switch (action){
       case "save" -> this.add(request);
       case "getAll" -> this.getAll(request);
@@ -53,7 +54,7 @@ public class DepartmentService extends BaseWebActionsService {
   }
 
 
-  public OperationReturnObject add(JSONObject request) {
+  public OperationReturnObject add(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
@@ -90,7 +91,7 @@ public class DepartmentService extends BaseWebActionsService {
     return res;
   }
 
-  public OperationReturnObject getAll(JSONObject request) {
+  public OperationReturnObject getAll(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
@@ -106,7 +107,7 @@ public class DepartmentService extends BaseWebActionsService {
     return res;
   }
 
-  public OperationReturnObject findById(JSONObject request) {
+  public OperationReturnObject findById(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires( request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
@@ -122,7 +123,7 @@ public class DepartmentService extends BaseWebActionsService {
     return res;
   }
 
-  public OperationReturnObject edit(JSONObject request) {
+  public OperationReturnObject edit(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
 
     requires(request,Params.DATA.getLabel());
@@ -145,7 +146,7 @@ public class DepartmentService extends BaseWebActionsService {
     return res;
   }
 
-  public OperationReturnObject delete(JSONObject request) {
+  public OperationReturnObject delete(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());

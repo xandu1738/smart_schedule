@@ -6,6 +6,7 @@ import com.servicecops.project.services.Employee.EmployeeService;
 import com.servicecops.project.services.auth.AuthService;
 import com.servicecops.project.services.institutions.InstitutionService;
 import com.servicecops.project.utils.OperationReturnObject;
+import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +20,7 @@ public class WebActionsService {
     private final ShiftManagementService shiftManagementService;
     private final EmployeeService employeeService;
 
-    public OperationReturnObject processAction(String service, String action, JSONObject payload) {
+    public OperationReturnObject processAction(String service, String action, JSONObject payload) throws AuthorizationRequiredException {
         return switch (service) {
             case "Auth" -> authService.process(action, payload);
             case "Institution" -> institutionService.process(action, payload);

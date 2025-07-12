@@ -3,10 +3,11 @@ package com.servicecops.project.services.schedule;
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
+import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 
 public class ScheduleRecordService extends BaseWebActionsService {
   @Override
-  public OperationReturnObject switchActions(String action, JSONObject request) {
+  public OperationReturnObject switchActions(String action, JSONObject request) throws AuthorizationRequiredException {
     return switch (action) {
       case "save" -> this.addScheduleRecord(request);
 
@@ -15,7 +16,7 @@ public class ScheduleRecordService extends BaseWebActionsService {
   }
 
 
-  public OperationReturnObject addScheduleRecord(JSONObject request) {
+  public OperationReturnObject addScheduleRecord(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, "data");
     JSONObject data = request.getJSONObject("data");

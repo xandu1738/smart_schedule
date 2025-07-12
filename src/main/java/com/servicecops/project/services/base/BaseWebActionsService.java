@@ -6,6 +6,7 @@ import com.servicecops.project.models.database.*;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.repositories.*;
 import com.servicecops.project.utils.OperationReturnObject;
+import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import jakarta.annotation.Nullable;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import java.util.*;
 @Service
 @Slf4j
 public abstract class BaseWebActionsService implements BaseWebActionsImpl {
+    private static final String AUTHENTICATION_REQUIRED = "AUTHENTICATION REQUIRED";
     @Autowired
     private SystemUserRepository userRepository;
     @Autowired
@@ -39,7 +41,7 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     private DepartmentRepository departmentRepository;
 
 
-    public OperationReturnObject process(String action, JSONObject payload) {
+    public OperationReturnObject process(String action, JSONObject payload) throws AuthorizationRequiredException {
         return switchActions(action, payload);
     }
 
@@ -99,9 +101,9 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     /**
      * This prevents a user from accessing a service if they are not logged in
      */
-    public void requiresAuth() {
+    public void requiresAuth() throws AuthorizationRequiredException {
         if (Boolean.FALSE.equals(isAuthenticated())) {
-            throw new IllegalArgumentException("AUTHENTICATION REQUIRED");
+            throw new AuthorizationRequiredException(AUTHENTICATION_REQUIRED);
         }
     }
 
@@ -118,7 +120,7 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
                     () -> new IllegalStateException("USER NOT FOUND")
             );
         }
-        throw new IllegalArgumentException("AUTHENTICATION REQUIRED");
+        throw new IllegalArgumentException(AUTHENTICATION_REQUIRED);
     }
 
     /**

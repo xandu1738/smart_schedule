@@ -27,12 +27,16 @@ public class DepartmentService extends BaseWebActionsService {
   @Getter
   private enum Params {
     ID("id"),
-    INSTITUTION_ID("institution_id"),
-    DEPARTMENT_ID("department_id"),
+    INSTITUTION_ID("institutionId"),
+    DEPARTMENT_ID("departmentId"),
+    DESCRIPTION("description"),
+    NO_OF_EMPLOYEES("noOfEmployees"),
+    MANAGER_NAME("managerName"),
+
     NAME("name"),
     TYPE("type"),
-    CREATED_BY("created_by"),
-    MAX_PEOPLE("max_people"),
+    CREATED_BY("createdBy"),
+    MAX_PEOPLE("maxPeople"),
     DATA("data"),
 
     ;
@@ -58,10 +62,15 @@ public class DepartmentService extends BaseWebActionsService {
     requiresAuth();
     requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data,Params.NAME.getLabel(),Params.INSTITUTION_ID.getLabel());
+    requires(data,Params.NAME.getLabel(),Params.INSTITUTION_ID.getLabel(), Params.MANAGER_NAME.getLabel(),
+        Params.NO_OF_EMPLOYEES.getLabel(), Params.DESCRIPTION.getLabel());
 
     String departmentName = data.getString(Params.NAME.getLabel());
+    String managerName = data.getString(Params.MANAGER_NAME.getLabel());
+    Integer noOfEmployees = data.getInteger(Params.NO_OF_EMPLOYEES.getLabel());
+    String description = data.getString(Params.DESCRIPTION.getLabel());
     Long institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
+
 
     Institution institution = institutionRepository.findById(institutionId).orElse(null);
     Department department = departmentRepository.findByNameAndInstitutionId(departmentName, institutionId)
@@ -78,6 +87,9 @@ public class DepartmentService extends BaseWebActionsService {
     Department newDepartment = new Department();
     newDepartment.setName(data.getString("name"));
     newDepartment.setInstitutionId(institutionId);
+    newDepartment.setManagerName(managerName);
+    newDepartment.setNoOfEmployees(noOfEmployees);
+    newDepartment.setDescription(description);
     newDepartment.setCreatedAt(Instant.now());
     newDepartment.setActive(true);
     newDepartment.setCreatedBy(authenticatedUser().getId());
@@ -128,24 +140,41 @@ public class DepartmentService extends BaseWebActionsService {
 
     requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data,Params.NAME.getLabel(), Params.DEPARTMENT_ID.getLabel());
+    requires(data,Params.DEPARTMENT_ID.getLabel());
 
-    Long departmentid = data.getLong(Params.DEPARTMENT_ID.getLabel());
 
-    Department department = departmentRepository.findById(departmentid).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
+    Long departmentId = data.getLong(Params.DEPARTMENT_ID.getLabel());
 
-    if (data.containsKey("name") && data.getString("name") != null) {
-      department.setName(data.getString("name"));
+    Department department = departmentRepository.findById(departmentId).orElseThrow(() -> new IllegalArgumentException("Department not found with id: " + departmentId));
+
+    if (data.containsKey(Params.NAME.getLabel()) && data.getString(Params.NAME.getLabel()) != null) {
+      department.setName(data.getString(Params.NAME.getLabel()));
+    }
+    if (data.containsKey(Params.INSTITUTION_ID.getLabel()) && data.getLong(Params.INSTITUTION_ID.getLabel()) != null) {
+      Long newInstitutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
+      Institution institution = institutionRepository.findById(newInstitutionId).orElse(null);
+      if (institution == null) {
+        throw new IllegalArgumentException("Institution not found with id: " + newInstitutionId);
+      }
+      department.setInstitutionId(newInstitutionId);
+    }
+    if (data.containsKey(Params.MANAGER_NAME.getLabel()) && data.getString(Params.MANAGER_NAME.getLabel()) != null) {
+      department.setManagerName(data.getString(Params.MANAGER_NAME.getLabel()));
+    }
+    if (data.containsKey(Params.NO_OF_EMPLOYEES.getLabel()) && data.getInteger(Params.NO_OF_EMPLOYEES.getLabel()) != null) {
+      department.setNoOfEmployees(data.getInteger(Params.NO_OF_EMPLOYEES.getLabel()));
+    }
+    if (data.containsKey(Params.DESCRIPTION.getLabel()) && data.getString(Params.DESCRIPTION.getLabel()) != null) {
+      department.setDescription(data.getString(Params.DESCRIPTION.getLabel()));
     }
 
     departmentRepository.save(department);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200,"edited successfully" ,department);
+    res.setCodeAndMessageAndReturnObject(200,"Department edited successfully" ,department);
 
     return res;
   }
-
   public OperationReturnObject delete(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request,Params.DATA.getLabel());

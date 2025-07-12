@@ -17,7 +17,6 @@ import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -78,31 +77,62 @@ public class ShiftManagementService extends BaseWebActionsService {
         return res;
     }
 
-    private OperationReturnObject assignToShift(JSONObject request) {
+    private OperationReturnObject assignEmployeesToShift(JSONObject request) {
         SystemUserModel authenticatedUser = authenticatedUser();
         requires(request, "data");
         JSONObject data = request.getJSONObject("data");
 
-        requires(data, "shift_id", "user_id");
+        requires(data, "schedule_id", "shifts");
 
-        Integer shiftId = data.getInteger("shift_id");
-        Long userId = data.getLong("user_id");
+        Long scheduleId = data.getLong("schedule_id");
+        if (scheduleId == null) {
+            throw new IllegalArgumentException("Schedule ID is required");
+        }
 
-        SystemUserModel user = getUserById(userId);
-        Shift shift = getShift(shiftId);
+        List<JSONObject> shifts = data.getJSONArray("shifts").toJavaList(JSONObject.class);
 
-        ShiftAssignment assignment = new ShiftAssignment();
-        assignment.setShiftId(shift.getId());
-        assignment.setEmployeeId(user.getId().intValue());
-        assignment.setUpdatedAt(getCurrentTimestamp());
-        assignment.setStatus(ShitStatus.PENDING.name());
-        assignment.setAssignedBy(authenticatedUser.getId().intValue());
+        if (shifts.isEmpty()) {
+            throw new IllegalArgumentException("At least one shift must be specified");
+        }
 
-        shiftAssignmentRepository.save(assignment);
+        shifts.forEach(shift -> {
+            requires(shift, "shift_id", "employees");
+
+            Integer shiftId = shift.getInteger("shift_id");
+            List<Long> employees = shift.getJSONArray("employees").toJavaList(Long.class);
+
+            if (shiftId == null) {
+                throw new IllegalArgumentException("Shift ID is required");
+            }
+
+            Shift s = getShift(shiftId);
+
+            if (employees.isEmpty()){
+                throw new IllegalArgumentException("At least one employee must be specified for shift " + s.getName());
+            }
+
+            employees.forEach(emp -> {
+                try {
+                    Employee employee = getEmployee(emp);
+                    List<ScheduleRecord> scheduleRecords = getEmployeeScheduleRecords(employee.getId().longValue(), scheduleId);
+                    if (scheduleRecords.isEmpty()) {
+                        throw new IllegalArgumentException("No schedule records found for employee ID: " + emp);
+                    }
+
+                    scheduleRecords.forEach(sr -> {
+                       sr.setShiftId(shiftId);
+                       //todo: save schedule record with shift ID
+                    });
+                } catch (AuthorizationRequiredException e) {
+                    throw new RuntimeException(e.getMessage());
+                }
+
+            });
+
+        });
 
         OperationReturnObject res = new OperationReturnObject();
         res.setReturnCodeAndReturnMessage(0, "Shift assigned successfully");
-        res.setReturnObject(assignment);
         return res;
     }
 
@@ -233,19 +263,19 @@ public class ShiftManagementService extends BaseWebActionsService {
         return res;
     }
 
-    private OperationReturnObject timeOffRequest(JSONObject request) {
+    private OperationReturnObject timeOffRequest(JSONObject request) throws AuthorizationRequiredException {
         SystemUserModel authenticatedUser = authenticatedUser();
         requires(request, "data");
         JSONObject data = request.getJSONObject("data");
         requires(data, "employee_id", "start_date", "end_date");
-        Integer employeeId = data.getInteger("employee_id");
+        Long employeeId = data.getLong("employee_id");
         String startDate = data.getString("start_date");
         String endDate = data.getString("end_date");
         String reason = data.getString("reason");
 
-        //todo: Get Employee
+        Employee employee = getEmployee(employeeId);
         TimeOffRequest offRequest = new TimeOffRequest();
-        offRequest.setEmployeeId(employeeId);
+        offRequest.setEmployeeId(employee.getId());
         offRequest.setStartDate(stringToTimestamp(startDate));
         offRequest.setEndDate(stringToTimestamp(endDate));
         offRequest.setRequestedOn(getCurrentTimestamp());
@@ -332,12 +362,22 @@ public class ShiftManagementService extends BaseWebActionsService {
         }
     }
 
-    private OperationReturnObject myTimeOffRequests(JSONObject request) {
+    private OperationReturnObject myTimeOffRequests(JSONObject request) throws AuthorizationRequiredException {
         SystemUserModel authenticatedUser = authenticatedUser();
+        requires(request, "data");
+        JSONObject data = request.getJSONObject("data");
+        requires(data, "employee_id");
 
-        //todo: Get Employee profile for logged in user
-        Integer employeeId = 1;// Placeholder for employee ID, replace it with actual logic to get employee ID from the authenticated user
-        List<Map<String, Object>> mySchedules = timeOffRepository.getEmployeeTimeOffRequests(employeeId);
+        Long employeeId = data.getLong("employee_id");
+
+        //todo: Get Employee profile for this user --expecting employee table to bear user ID
+        if (employeeId == null) {
+            throw new IllegalArgumentException("Employee not specified.");
+        }
+
+        Employee employee = getEmployee(employeeId);
+
+        List<Map<String, Object>> mySchedules = timeOffRepository.getEmployeeTimeOffRequests(employee.getId());
         OperationReturnObject res = new OperationReturnObject();
         res.setReturnCodeAndReturnMessage(200, "My time off requests fetched successfully");
         res.setReturnObject(mySchedules);
@@ -346,10 +386,10 @@ public class ShiftManagementService extends BaseWebActionsService {
 
     @Transactional
     @Override
-    public OperationReturnObject switchActions(String action, JSONObject request) {
+    public OperationReturnObject switchActions(String action, JSONObject request) throws AuthorizationRequiredException {
         return switch (action) {
             case "createShift" -> createShift(request);
-            case "assignToShift" -> assignToShift(request);
+            case "assignToShift" -> assignEmployeesToShift(request);
             case "swapRequest" -> makeSwapRequest(request);
             case "swapRequests" -> getSwapRequests(request);
             case "approveSwap" -> approveSwapRequest(request);

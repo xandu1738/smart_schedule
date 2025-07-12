@@ -1,9 +1,17 @@
 export const APP_ROUTE = {
+    // Auth
+    SIGN_IN: 'sign-in',
+    SIGN_UP: 'sign-up',
+    FORGOT_PASSWORD: 'forgot-password',
+    RESET_PASSWORD: 'reset-password',
+    
+    // Dashboard
     DASHBOARD: 'dashboard',
     INSTITUTIONS: 'institutions',
     DEPARTMENTS: 'departments',
     SCHEDULES: 'schedules',
-    SHIFTS: 'shifts'
+    SHIFTS: 'shifts',
+    ACCOUNTS: 'accounts'
 }
 
 /**

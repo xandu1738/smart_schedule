@@ -4,9 +4,16 @@ import { APP_CONFIG } from "../../config/app.config";
 import { APP_MENUS } from "../../config/menus.config";
 import { trimSlashes } from "../../helpers/utils";
 import LucideIcon from "../LucideIcon";
+import { useDispatch } from "react-redux";
+import { logout } from "../../helpers/redux/slices/authSlice";
 
 const DashboardLayout = () => {
 	const { pathname } = useLocation();
+    const dispatch = useDispatch()
+
+    const handleLogout = () => {
+        dispatch(logout())
+    }
 
 	return (
 		// <div className="min-h-screen bg-gray-50">
@@ -110,9 +117,10 @@ const DashboardLayout = () => {
 						<div className="w-8 h-8 bg-slate-200 text-black rounded-xs flex items-center justify-center pointer">
 							<LucideIcon
 								name="LogOut"
-								className="text-red-500"
+								className="text-red-500 cursor-pointer"
 								width="15"
 								height="15"
+                                onClick={handleLogout}
 							/>
 						</div>
 					</div>

@@ -1,7 +1,7 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { AxiosPrivate } from "../../axios/axios_helper";
 
-const successCodes = [200, 0, 201];
+export const successCodes = [200, 0, 201];
 
 export const axiosBaseQuery = async (data) => {
     try {

@@ -1,13 +1,10 @@
 import React from "react";
-import { X } from "lucide-react";
 import AddButton from "../../components/AddButton";
 import InstitutionCard from "../../components/InstitutionCard";
-import { InputText } from "primereact/inputtext";
-import { FloatLabel } from "primereact/floatlabel";
+import AddInstitutionDialog from "./AddInstitutionDialog";
 
-const Institutions = (heading, visible, setVisible, fields, textArea) => {
+const Institutions = (props) => {
   const [showDialog, setShowDialog] = React.useState(false);
-  const [institutionName, setInstitutionName] = React.useState("");
 
   return (
     <>
@@ -38,30 +35,7 @@ const Institutions = (heading, visible, setVisible, fields, textArea) => {
         </section>
       </div>
       {showDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black opacity-50"></div>
-          <div className="relative bg-white rounded-lg p-6 shadow-lg w-full max-w-md">
-            <div className="flex flex-row items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Add Institution</h2>
-              <button
-                onClick={() => setShowDialog(false)}
-                className="rounded-full p-1 hover:bg-gray-200 hover:text-blue-500 transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            <div>
-              <FloatLabel className="card flex justify-content-center">
-                <InputText
-                  id="institutionName"
-                  value={institutionName}
-                  onChange={(e) => setInstitutionName(e.target.value)}
-                />
-                <label htmlFor="institutionName">Institution Name</label>
-              </FloatLabel>
-            </div>
-          </div>
-        </div>
+        <AddInstitutionDialog setShowDialog={setShowDialog} />
       )}
     </>
   );

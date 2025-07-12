@@ -18,6 +18,6 @@
   <include file="/changes/Institution/removed_some_institution_fields.sql" relativeToChangelogFile="true"/>
   <include file="/changes/days_off_req.sql" relativeToChangelogFile="true"/>
   <include file="/changes/sort_time_off_status.sql" relativeToChangelogFile="true"/>
-  <include file="changes/Department_entity_update_14.sql" relativeToChangelogFile="true"/>
+  <include file="/changes/Department_entity_update_14.sql" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

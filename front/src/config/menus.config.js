@@ -47,4 +47,9 @@ export const APP_MENUS = [
 		name: "Shifts",
 		path: buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.SHIFTS),
 	},
+    {
+        icon: "User",
+        name: "Accounts",
+        path: buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.ACCOUNTS),
+    },
 ];

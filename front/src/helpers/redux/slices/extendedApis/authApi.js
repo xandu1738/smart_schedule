@@ -1,23 +1,27 @@
-import { baseApiSlice } from '../baseApiSlice';
+import { APP_CONFIG } from "../../../../config/app.config"
+import { AxiosPublic } from "../../../axios/axios_helper"
+import { successCodes } from "../baseApiSlice"
 
-const enhancedApi = baseApiSlice.enhanceEndpoints({
-  addTagTypes: ['Auth']
-});
-
-const authApi = enhancedApi.injectEndpoints({
-    endpoints: (builder) => ({
-        login: builder.mutation({
-            query: (data) => {
-                return {
+export const authApi = {
+    login: (data) => {
+        return new Promise((resolve, reject) => {
+            AxiosPublic({
+                method: "POST",
+                data: {
                     "ACTION": "login",
                     "SERVICE": "Auth",
                     "data": {
                         ...data
                     }
                 }
-            },
-        }),
-    }),
-});
-
-export const { useLoginMutation } = authApi;
+            }).then((res) => {
+                if (successCodes.includes(res?.data?.returnCode)) {
+                    resolve(res)
+                }
+                throw new Error(res?.data?.returnMessage || `Encountered an error while logging in. Contact support at ${APP_CONFIG.SUPPORT_EMAIL ?? "support@smart-skedue.com"}.`)
+            }).catch((err) => {
+                reject(err)
+            })
+        })
+    }
+}

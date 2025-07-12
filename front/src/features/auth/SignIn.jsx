@@ -27,9 +27,9 @@ export default function SignIn() {
     console.log("Sign in attempted with:", formData);
 
     authApi.login(formData).then((res) => {
+        console.log("Login response:", res?.data)
         dispatch(loginSuccess({
-            user: { id: 1, name: 'John Doe' },
-            token: 'abc123token',
+            ...res?.data?.returnObject
         }))
         navigate(`/${APP_ROUTE.DASHBOARD}`)
     }).catch((err) => {

@@ -23,6 +23,15 @@ public class Department {
   @Column(name = "institution_id", nullable = false)
   private Long institutionId;
 
+  @Column(name = "description")
+  private String description;
+
+  @Column(name = "no_of_employees")
+  private Integer noOfEmployees;
+
+  @Column(name = "manager_name")
+  private String managerName;
+
   @ColumnDefault("now()")
   @Column(name = "created_at")
   private Instant createdAt;

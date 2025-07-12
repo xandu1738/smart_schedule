@@ -5,6 +5,7 @@ import com.servicecops.project.services.department.DepartmentService;
 import com.servicecops.project.services.Employee.EmployeeService;
 import com.servicecops.project.services.auth.AuthService;
 import com.servicecops.project.services.institutions.InstitutionService;
+import com.servicecops.project.services.schedule.ScheduleService;
 import com.servicecops.project.utils.OperationReturnObject;
 import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class WebActionsService {
     private final AuthService authService;
     private final InstitutionService institutionService;
     private final DepartmentService departmentService;
+    private final ScheduleService scheduleService;
     private final ShiftManagementService shiftManagementService;
     private final EmployeeService employeeService;
 
@@ -25,6 +27,7 @@ public class WebActionsService {
             case "Auth" -> authService.process(action, payload);
             case "Institution" -> institutionService.process(action, payload);
             case "Department" -> departmentService.process(action, payload);
+            case "Schedule" -> scheduleService.process(action, payload);
             case "Shift" -> shiftManagementService.process(action, payload);
             case "Employee" -> employeeService.process(action, payload);
 

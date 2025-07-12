@@ -13,6 +13,7 @@ import com.servicecops.project.repositories.SystemRolePermissionRepository;
 import com.servicecops.project.repositories.SystemUserRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
+import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,12 +36,12 @@ public class AuthService extends BaseWebActionsService {
     private final SystemRolePermissionRepository systemRolePermissionRepository;
 
     private OperationReturnObject login(JSONObject request) {
-        requires(request,"data");
+        requires(request, "data");
         JSONObject data = request.getJSONObject("data");
 
         OperationReturnObject res = new OperationReturnObject();
 
-        requires(data,"email", "password");
+        requires(data, "email", "password");
 
         String email = data.getString("email");
         String password = data.getString("password");
@@ -55,13 +56,13 @@ public class AuthService extends BaseWebActionsService {
         }
 
         final SystemUserModel userDetails = userDetailService.loadUserByUsername(email);
-        final String accessToken = jwtUtility.generateAccessToken(userDetails,"ACCESS");
-        final String refreshToken = jwtUtility.generateAccessToken(userDetails,"REFRESH");
+        final String accessToken = jwtUtility.generateAccessToken(userDetails, "ACCESS");
+        final String refreshToken = jwtUtility.generateAccessToken(userDetails, "REFRESH");
 
         UserDto profile = userDtoMapper.apply(userDetails);
 
         //For consistency with other user querying calls
-        List<Map<String,Object>> permission = systemRolePermissionRepository.findPermissionsByRoleCode(userDetails.getRoleCode());
+        List<Map<String, Object>> permission = systemRolePermissionRepository.findPermissionsByRoleCode(userDetails.getRoleCode());
         Map<String, Object> response = new HashMap<>();
         response.put("accessToken", accessToken); // this is the jwt token the user can user from now on.
         response.put("refreshToken", refreshToken); // this is the jwt token the user can user from now on.
@@ -73,10 +74,11 @@ public class AuthService extends BaseWebActionsService {
         return res;
     }
 
-    private OperationReturnObject signUp(JSONObject request) {
-        requires(request,"data");
+    private OperationReturnObject signUp(JSONObject request) throws AuthorizationRequiredException {
+        requiresAuth();
+        requires(request, "data");
         JSONObject data = request.getJSONObject("data");
-        requires(data,"role", "first_name", "last_name", "email", "password");
+        requires(data, "role", "first_name", "last_name", "email", "password");
         String role = data.getString("role");
         String firstName = data.getString("first_name");
         String lastName = data.getString("last_name");
@@ -106,7 +108,7 @@ public class AuthService extends BaseWebActionsService {
 
         Institution institutionDetails = null;
         if (!Objects.equals(role, DefaultRoles.SUPER_ADMIN.name())) {
-             institutionDetails = getInstitution(institution);
+            institutionDetails = getInstitution(institution);
         }
         SystemUserModel user = new SystemUserModel();
         user.setFirstName(firstName);
@@ -127,11 +129,11 @@ public class AuthService extends BaseWebActionsService {
         return res;
     }
 
-    private OperationReturnObject usersList(JSONObject request){
+    private OperationReturnObject usersList(JSONObject request) throws AuthorizationRequiredException {
         requiresAuth();
         JSONObject search = request.getJSONObject("search");
 
-        if(search == null){
+        if (search == null) {
             search = new JSONObject();
         }
 
@@ -144,16 +146,16 @@ public class AuthService extends BaseWebActionsService {
         return returnObject;
     }
 
-    private OperationReturnObject usersProfile(JSONObject request){
+    private OperationReturnObject usersProfile(JSONObject request) throws AuthorizationRequiredException {
         requiresAuth();
         JSONObject search = request.getJSONObject("search");
 
-        if(search == null){
+        if (search == null) {
             search = new JSONObject();
         }
 
         Long id = search.getLong("id");
-        if (id == null){
+        if (id == null) {
             throw new IllegalStateException("Please specify user's ID");
         }
 
@@ -171,7 +173,7 @@ public class AuthService extends BaseWebActionsService {
     }
 
     @Override
-    public OperationReturnObject switchActions(String action, JSONObject request) {
+    public OperationReturnObject switchActions(String action, JSONObject request) throws AuthorizationRequiredException {
         return switch (action) {
             case "login" -> login(request);
             case "register" -> signUp(request);

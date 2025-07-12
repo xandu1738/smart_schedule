@@ -41,7 +41,7 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     private DepartmentRepository departmentRepository;
 
 
-    public OperationReturnObject process(String action, JSONObject payload) {
+    public OperationReturnObject process(String action, JSONObject payload) throws AuthorizationRequiredException {
         return switchActions(action, payload);
     }
 

@@ -6,6 +6,7 @@ import com.servicecops.project.repositories.ScheduleRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturn;
 import com.servicecops.project.utils.OperationReturnObject;
+import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ public class ScheduleService extends BaseWebActionsService {
     }
 
     @Override
-    public OperationReturnObject switchActions(String action, JSONObject request) {
+    public OperationReturnObject switchActions(String action, JSONObject request) throws AuthorizationRequiredException {
         return switch (action) {
             case "save" -> this.createSchedule(request);
             case "edit" -> this.edit(request);
@@ -53,7 +54,7 @@ public class ScheduleService extends BaseWebActionsService {
 
 
     //    .orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
-    public OperationReturnObject createSchedule(JSONObject request) {
+    public OperationReturnObject createSchedule(JSONObject request) throws AuthorizationRequiredException {
         requiresAuth();
 
         requires(request, Params.DATA.getLabel());
@@ -85,7 +86,7 @@ public class ScheduleService extends BaseWebActionsService {
 
     }
 
-    public OperationReturnObject findByInstitutionId(JSONObject request) {
+    public OperationReturnObject findByInstitutionId(JSONObject request) throws AuthorizationRequiredException {
         requiresAuth();
         requires(request, Params.DATA.getLabel());
         JSONObject data = request.getJSONObject(Params.DATA.getLabel());
@@ -108,7 +109,7 @@ public class ScheduleService extends BaseWebActionsService {
 
     }
 
-    public OperationReturnObject findByDepartmentIdAndInstitutionId(JSONObject request) {
+    public OperationReturnObject findByDepartmentIdAndInstitutionId(JSONObject request) throws AuthorizationRequiredException {
         requiresAuth();
         requires(request, Params.DATA.getLabel());
         JSONObject data = request.getJSONObject(Params.DATA.getLabel());
@@ -129,7 +130,7 @@ public class ScheduleService extends BaseWebActionsService {
 
     }
 
-    public OperationReturnObject edit(JSONObject request) {
+    public OperationReturnObject edit(JSONObject request) throws AuthorizationRequiredException {
         requiresAuth();
 
         requires(request, Params.DATA.getLabel());
@@ -161,7 +162,7 @@ public class ScheduleService extends BaseWebActionsService {
 
     }
 
-    public OperationReturnObject delete(JSONObject request) {
+    public OperationReturnObject delete(JSONObject request) throws AuthorizationRequiredException {
         requiresAuth();
 
         requires(request, Params.DATA.getLabel());

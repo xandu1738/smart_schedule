@@ -5,6 +5,8 @@ import AddInstitutionDialog from "./AddInstitutionDialog";
 
 const Institutions = (props) => {
   const [showDialog, setShowDialog] = React.useState(false);
+  const [institutions, setInstitutions] = React.useState([]);
+  const [refetch, setRefetch] = React.useState(0);
 
   return (
     <>
@@ -24,18 +26,19 @@ const Institutions = (props) => {
           </div>
         </section>
         <section className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <InstitutionCard
-            institution={"ServiceCops"}
-            onClic={() => {}}
-            description={"This is a IT firm that changes the scape in Uganda"}
-            yearEstablished={"1990"}
-            RegNumber={"TIN:12341234213"}
-            institutionType={"Private"}
-          />
+          {institutions.map((institution) => (
+			<InstitutionCard
+			  key={institution.id}
+			  institution={institution.name}
+			  onClick={() => {}}
+			  description={institution.description}
+			  managerName={institution.managerName}
+			/>
+		  ))}
         </section>
       </div>
       {showDialog && (
-        <AddInstitutionDialog setShowDialog={setShowDialog} />
+        <AddInstitutionDialog setShowDialog={setShowDialog} setRefetch={setRefetch} />
       )}
     </>
   );

@@ -5,7 +5,7 @@ import Button from "../../components/Button";
 import FloatLabelTextarea from "../../components/FloatLabelTextarea";
 import FloatLabelInput from "../../components/FloatLabelInput";
 
-const AddInstitutionDialog = ({ setShowDialog, setRefetch }) => {
+const EditInstitutionDialog = ({ setShowDialog, setRefetch }) => {
     // const [showDialog, onClose] = React.useState(false);
 
     const formik = useFormik({
@@ -31,7 +31,7 @@ const AddInstitutionDialog = ({ setShowDialog, setRefetch }) => {
         <div className="absolute inset-0 bg-black opacity-50"></div>
         <div className="relative bg-white rounded-lg p-6 shadow-lg w-[40%] m-4">
           <div className="flex flex-row items-center justify-between mb-4">
-            <h2 className="text-xl font-bold">Add Institution</h2>
+            <h2 className="text-xl font-bold">Edit Institution</h2>
             <button
               onClick={() => setShowDialog(false)}
               className="rounded-full p-1 hover:bg-gray-200 hover:text-blue-500 transition-colors"
@@ -91,7 +91,7 @@ const AddInstitutionDialog = ({ setShowDialog, setRefetch }) => {
                 onChange={formik.handleChange}
               />
             </div>
-            <Button type={"submit"} onClick={() => {}} className={"w-full mt-4"} buttonName={"Save"} />
+            <Button type={"submit"} onClick={() => {}} className={"w-full mt-4"} buttonName={"Edit"} />
           </form>
         </div>
       </div>
@@ -99,4 +99,4 @@ const AddInstitutionDialog = ({ setShowDialog, setRefetch }) => {
   );
 };
 
-export default AddInstitutionDialog;
+export default EditInstitutionDialog;

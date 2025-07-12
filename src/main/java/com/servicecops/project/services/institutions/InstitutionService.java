@@ -29,8 +29,6 @@ public class InstitutionService extends BaseWebActionsService {
     NAME("name"),
     DATA("data"),
     DESCRIPTION("description"),
-    OWNER_NAME("ownerName"),
-    LOCATION("location"),
     REG_NO("regNo"),
     YEAR_ESTABLISHED("yearEstablished"),
     INSTITUTION_TYPE("institutionType"),
@@ -60,16 +58,12 @@ public class InstitutionService extends BaseWebActionsService {
 
     requires(data, Params.NAME.getLabel());
     requires(data, Params.DESCRIPTION.getLabel());
-    requires(data, Params.OWNER_NAME.getLabel());
-    requires(data, Params.LOCATION.getLabel());
     requires(data, Params.REG_NO.getLabel());
     requires(data, Params.YEAR_ESTABLISHED.getLabel());
     requires(data, Params.INSTITUTION_TYPE.getLabel());
 
     String name = data.getString(Params.NAME.getLabel());
     String description = data.getString(Params.DESCRIPTION.getLabel());
-    String ownerName = data.getString(Params.OWNER_NAME.getLabel());
-    String location = data.getString(Params.LOCATION.getLabel());
     String regNo = data.getString(Params.REG_NO.getLabel());
     String yearEstablished = data.getString(Params.YEAR_ESTABLISHED.getLabel());
     String institutionType = data.getString(Params.INSTITUTION_TYPE.getLabel());
@@ -92,8 +86,6 @@ public class InstitutionService extends BaseWebActionsService {
     newInstitution.setName(name);
     newInstitution.setCode(code);
     newInstitution.setDescription(description);
-    newInstitution.setOwnerName(ownerName);
-    newInstitution.setLocation(location);
     newInstitution.setRegNo(regNo);
     newInstitution.setYearEstablished(yearEstablished);
     newInstitution.setInstitutionType(institutionType);
@@ -111,8 +103,6 @@ public class InstitutionService extends BaseWebActionsService {
     responseObject.put("name", newInstitution.getName());
     responseObject.put("code", newInstitution.getCode());
     responseObject.put("description", newInstitution.getDescription());
-    responseObject.put("ownerName", newInstitution.getOwnerName());
-    responseObject.put("location", newInstitution.getLocation());
     responseObject.put("regNo", newInstitution.getRegNo());
     responseObject.put("yearEstablished", newInstitution.getYearEstablished());
     responseObject.put("institutionType", newInstitution.getInstitutionType());
@@ -161,8 +151,6 @@ public class InstitutionService extends BaseWebActionsService {
     String newName = null;
     String newCode = null;
     String newDescription = null;
-    String newOwnerName = null;
-    String newLocation = null;
     String newRegNo = null;
     String newYearEstablished = null;
     String newInstitutionType = null;
@@ -196,14 +184,6 @@ public class InstitutionService extends BaseWebActionsService {
       newDescription = data.getString(Params.DESCRIPTION.getLabel());
     }
 
-    if (data.containsKey(Params.OWNER_NAME.getLabel()) && data.getString(Params.OWNER_NAME.getLabel()) != null) {
-      newOwnerName = data.getString(Params.OWNER_NAME.getLabel());
-    }
-
-    if (data.containsKey(Params.LOCATION.getLabel()) && data.getString(Params.LOCATION.getLabel()) != null) {
-      newLocation = data.getString(Params.LOCATION.getLabel());
-    }
-
     if (data.containsKey(Params.YEAR_ESTABLISHED.getLabel()) && data.getInteger(Params.YEAR_ESTABLISHED.getLabel()) != null) {
       newYearEstablished = data.getString(Params.YEAR_ESTABLISHED.getLabel()); // Corrected to getInteger
     }
@@ -221,12 +201,7 @@ public class InstitutionService extends BaseWebActionsService {
     if (newDescription != null) {
       existingInstitution.setDescription(newDescription);
     }
-    if (newOwnerName != null) {
-      existingInstitution.setOwnerName(newOwnerName);
-    }
-    if (newLocation != null) {
-      existingInstitution.setLocation(newLocation);
-    }
+
     if (newRegNo != null) {
       existingInstitution.setRegNo(newRegNo);
     }
@@ -245,8 +220,6 @@ public class InstitutionService extends BaseWebActionsService {
     responseObject.put("name", existingInstitution.getName());
     responseObject.put("code", existingInstitution.getCode());
     responseObject.put("description", existingInstitution.getDescription());
-    responseObject.put("ownerName", existingInstitution.getOwnerName());
-    responseObject.put("location", existingInstitution.getLocation());
     responseObject.put("regNo", existingInstitution.getRegNo());
     responseObject.put("yearEstablished", existingInstitution.getYearEstablished());
     responseObject.put("institutionType", existingInstitution.getInstitutionType());

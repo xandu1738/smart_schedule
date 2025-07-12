@@ -39,6 +39,8 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     private ShiftRepository shiftRepository;
     @Autowired
     private DepartmentRepository departmentRepository;
+    @Autowired
+    private EmployeeRepository employeeRepository;
 
 
     public OperationReturnObject process(String action, JSONObject payload) throws AuthorizationRequiredException {
@@ -312,6 +314,20 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
         return departmentRepository.findById(departmentId).orElseThrow(
                 () -> new IllegalStateException("Department does not exist")
         );
+    }
+
+    public Employee getEmployee(Long employeeId) throws AuthorizationRequiredException {
+        requiresAuth();
+        if (employeeId == null) {
+            throw new IllegalArgumentException("Employee Id cannot be null");
+        }
+
+        return employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalStateException("Employee does not exist"));
+    }
+
+    public List<ScheduleRecord> getEmployeeScheduleRecords(Long employeeId, Long scheduleId) {
+        return Collections.EMPTY_LIST;
     }
 
 }

@@ -3,12 +3,12 @@ package com.servicecops.project.services.auth;
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.config.ApplicationConf;
 import com.servicecops.project.config.JwtUtility;
-import com.servicecops.project.models.database.Institution;
-import com.servicecops.project.models.database.SystemRolePermissionAssignmentModel;
-import com.servicecops.project.models.database.SystemUserModel;
+import com.servicecops.project.models.database.*;
 import com.servicecops.project.models.dtos.UserDto;
 import com.servicecops.project.models.dtos.mapper.UserDtoMapper;
 import com.servicecops.project.models.jpahelpers.enums.DefaultRoles;
+import com.servicecops.project.repositories.DepartmentRepository;
+import com.servicecops.project.repositories.EmployeeRepository;
 import com.servicecops.project.repositories.SystemRolePermissionRepository;
 import com.servicecops.project.repositories.SystemUserRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
@@ -34,6 +34,8 @@ public class AuthService extends BaseWebActionsService {
     private final SystemUserRepository systemUserRepository;
     private final UserDtoMapper userDtoMapper;
     private final SystemRolePermissionRepository systemRolePermissionRepository;
+    private final EmployeeRepository employeeRepository;
+    private final DepartmentRepository departmentRepository;
 
     private OperationReturnObject login(JSONObject request) {
         requires(request, "data");
@@ -172,6 +174,41 @@ public class AuthService extends BaseWebActionsService {
         return returnObject;
     }
 
+    private OperationReturnObject signUpEmployee(JSONObject request) throws AuthorizationRequiredException {
+        requiresAuth();
+        requires(request, "data");
+        JSONObject data = request.getJSONObject("data");
+        requires(data, "employee_id");
+
+        Employee employee = employeeRepository.findByIdAndArchived(data.getLong("employee_id").intValue(), true).orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + request.getLong("employee_id")));
+        Department department = departmentRepository.findById(
+                Long.valueOf(employee.getDepartment())).orElseThrow(() -> new IllegalArgumentException("Department not found with id: " + request.getLong("department_id")));
+
+        List<String> names = List.of(employee.getName().split(" "));
+        String role = DefaultRoles.EMPLOYEE.name();
+        String firstName = names.get(0);
+        String lastName = names.get(1);
+        String email = employee.getEmail();
+
+        SystemUserModel user = new SystemUserModel();
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setEmail(email);
+        user.setInstitutionId(department.getInstitutionId().intValue());
+        user.setRoleCode(role);
+        user.setPassword(""); // TODO Azandu add password and email it
+        user.setCreatedAt(getCurrentTimestamp());
+        user.setIsActive(true);
+        systemUserRepository.save(user);
+
+        employee.setUserId(user.getId());
+        employeeRepository.save(employee);
+
+        OperationReturnObject res = new OperationReturnObject();
+        res.setReturnCodeAndReturnMessage(200, "User created successfully");
+        return res;
+    }
+
     @Override
     public OperationReturnObject switchActions(String action, JSONObject request) throws AuthorizationRequiredException {
         return switch (action) {
@@ -179,6 +216,7 @@ public class AuthService extends BaseWebActionsService {
             case "register" -> signUp(request);
             case "usersList" -> usersList(request);
             case "profile" -> usersProfile(request);
+            case "signUpEmployee" -> signUpEmployee(request);
             default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
         };
     }

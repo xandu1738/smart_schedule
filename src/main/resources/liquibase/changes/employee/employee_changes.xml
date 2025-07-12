@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+     http://www.liquibase.org/xml/ns/dbchangelog
+     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+
+    <changeSet id="add_updated_by_updated_on_to_employee_table" author="probuse" runOnChange="false">
+        <sqlFile
+                encoding="utf8"
+                path="liquibase/changes/employee/add_updated_by_updated_on_to_employee_table.sql"
+                relativeToChangelogFile="false"
+                splitStatements="true"
+                endDelimiter="$BODY$"
+                stripComments="true"/>
+    </changeSet>
+    <changeSet id="add_user_id_to_employee" author="probuse">
+        <sqlFile
+                encoding="utf8"
+                path="liquibase/changes/employee/add_user_id_to_employee_table.sql"
+                relativeToChangelogFile="false"
+                splitStatements="true"
+                endDelimiter="$BODY$"
+                stripComments="true"/>
+    </changeSet>
+    <changeSet id="make_email_unique" author="probuse">
+        <sqlFile
+                encoding="utf8"
+                path="liquibase/changes/employee/make_employee_email_unique_change_active_to_archived.sql"
+                relativeToChangelogFile="false"
+                splitStatements="true"
+                endDelimiter="$BODY$"
+                stripComments="true"/>
+    </changeSet>
+
+</databaseChangeLog>

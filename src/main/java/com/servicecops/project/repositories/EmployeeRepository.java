@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface EmployeeRepository extends JetRepository<Employee, Long> {
     Optional<Employee> findByEmail(String email);
-    List<Employee> findByDepartmentAndActive(Integer department, boolean active);
+    List<Employee> findByDepartmentAndArchived(Integer department, boolean archived);
+    Optional<Employee> findByIdAndArchived(Integer id, boolean archived);
 
 }

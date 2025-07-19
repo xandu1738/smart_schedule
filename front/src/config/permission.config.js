@@ -5,7 +5,7 @@ const PERMISSION = {
 
 export const DOMAIN = {
     BACK_OFFICE: "BACK_OFFICE",
-    CLIENT: "CLIENT"
+    INSTITUTION: "INSTITUTION"
 }
 
 export const APP_PERMISSIONS = {

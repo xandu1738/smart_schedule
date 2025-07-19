@@ -128,7 +128,7 @@ public class ScheduleService extends BaseWebActionsService {
 
     Integer createdScheduleId = newSchedule.getId();
 
-    Optional<List<Employee>> employeesOptional = employeeRepository.findByDepartmentAndArchivedTrue(departmentId);
+    Optional<List<Employee>> employeesOptional = employeeRepository.findByDepartmentAndArchivedFalse(departmentId);
     List<Employee> employees = employeesOptional.orElse(new ArrayList<>());
 
     if (employees.isEmpty()) {

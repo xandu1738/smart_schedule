@@ -115,7 +115,6 @@ public class DepartmentService extends BaseWebActionsService {
 
     return res;
   }
-
   public OperationReturnObject getAll(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request,Params.DATA.getLabel());
@@ -143,7 +142,6 @@ public class DepartmentService extends BaseWebActionsService {
 
     return res;
   }
-
   public OperationReturnObject findById(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires( request,Params.DATA.getLabel());
@@ -159,7 +157,6 @@ public class DepartmentService extends BaseWebActionsService {
 
     return res;
   }
-
   public OperationReturnObject edit(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
 

@@ -1,6 +1,7 @@
 package com.servicecops.project.services;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.servicecops.project.models.database.ReportManagerService;
 import com.servicecops.project.services.department.DepartmentService;
 import com.servicecops.project.services.Employee.EmployeeService;
 import com.servicecops.project.services.auth.AuthService;
@@ -21,6 +22,7 @@ public class WebActionsService {
     private final ScheduleService scheduleService;
     private final ShiftManagementService shiftManagementService;
     private final EmployeeService employeeService;
+    private final ReportManagerService reportManagerService;
 
     public OperationReturnObject processAction(String service, String action, JSONObject payload) throws AuthorizationRequiredException {
         return switch (service) {
@@ -30,6 +32,7 @@ public class WebActionsService {
             case "Schedule" -> scheduleService.process(action, payload);
             case "Shift" -> shiftManagementService.process(action, payload);
             case "Employee" -> employeeService.process(action, payload);
+            case "Report" -> reportManagerService.process(action, payload);
 
             default -> {
                 OperationReturnObject res = new OperationReturnObject();

@@ -2,6 +2,7 @@ package com.servicecops.project.services;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.*;
+import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.models.jpahelpers.enums.OffRequestStatus;
 import com.servicecops.project.models.jpahelpers.enums.ShiftSwapStatus;
 import com.servicecops.project.repositories.*;
@@ -9,30 +10,33 @@ import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
 import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
+@Slf4j
 public class ShiftManagementService extends BaseWebActionsService {
     private final ShiftAssignmentRepository shiftAssignmentRepository;
     private final ShiftSwapRepository shiftSwapRepository;
     private final ShiftRepository shiftRepository;
     private final TimeOffRepository timeOffRepository;
     private final ScheduleRecordRepository scheduleRecordRepository;
+    private final EmployeeRepository employeeRepository;
 
-    public ShiftManagementService(ShiftAssignmentRepository shiftAssignmentRepository, ShiftSwapRepository shiftSwapRepository, ShiftRepository shiftRepository, TimeOffRepository timeOffRepository, ScheduleRecordRepository scheduleRecordRepository) {
+    public ShiftManagementService(ShiftAssignmentRepository shiftAssignmentRepository, ShiftSwapRepository shiftSwapRepository, ShiftRepository shiftRepository, TimeOffRepository timeOffRepository, ScheduleRecordRepository scheduleRecordRepository, EmployeeRepository employeeRepository) {
         super();
         this.shiftAssignmentRepository = shiftAssignmentRepository;
         this.shiftSwapRepository = shiftSwapRepository;
         this.shiftRepository = shiftRepository;
         this.timeOffRepository = timeOffRepository;
         this.scheduleRecordRepository = scheduleRecordRepository;
+        this.employeeRepository = employeeRepository;
     }
 
     private OperationReturnObject createShift(JSONObject request) {
@@ -203,7 +207,7 @@ public class ShiftManagementService extends BaseWebActionsService {
             res.setReturnObject(swapRequests);
             return res;
         } catch (AuthorizationRequiredException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 
@@ -431,11 +435,105 @@ public class ShiftManagementService extends BaseWebActionsService {
         return returnObject;
     }
 
+    private OperationReturnObject deleteShift(JSONObject request) {
+        belongsTo(AppDomains.INSTITUTION);
+        requires(request, "search");
+
+        JSONObject search = request.getJSONObject("search");
+        if (search == null) {
+            search = new JSONObject();
+        }
+        requires(search, "shift_id");
+        Integer shiftId = search.getInteger("shift_id");
+
+        Shift shift = getShift(shiftId);
+        shiftRepository.delete(shift);
+
+        OperationReturnObject res = new OperationReturnObject();
+        res.setReturnCodeAndReturnMessage(200, "Shift deleted successfully");
+        return res;
+    }
+
+    private OperationReturnObject shiftSimulation(JSONObject request) {
+        SystemUserModel authenticatedUser = authenticatedUser();
+        JSONObject data = request.getJSONObject("data");
+        if (data == null) {
+            throw new IllegalArgumentException("Data is required for shift simulation");
+        }
+
+        Integer departmentId = data.getInteger("department_id");
+        Department department = getDepartment(departmentId.longValue());
+
+//        Integer shiftId = data.getInteger("shift_id");
+//        Shift shift = getShift(shiftId);
+        List<Shift> shifts = shiftRepository.findAllByDepartmentId(departmentId);
+
+        if (shifts.isEmpty()) {
+            throw new IllegalArgumentException("No shifts found for the specified department");
+        }
+
+        if (!Objects.equals(department.getInstitutionId(), authenticatedUser.getInstitutionId().longValue())) {
+            throw new IllegalArgumentException("You are not authorized to view shifts for this department");
+        }
+
+        List<Employee> employees = employeeRepository.findAllByDepartmentAndArchived(department.getId(), false);
+        //split employees into n groups where n=number of shifts
+//        List<JSONObject> shiftAssignments = shifts.stream().map(shift -> {
+//            JSONObject o = JSON.parseObject(JSON.toJSONString(shift));
+//            Map<Boolean, List<Employee>> collected = employees.stream()
+//                    .filter(employee -> employee.getStatus().equals(EmployeeStatus.AVAILABLE.name()))
+////                    .filter(employee -> employee.getId() % shifts.size() == shift.getId() % shifts.size())
+//                    .collect(Collectors.partitioningBy(employee -> employee.getId() % shifts.size() == shift.getId() % shifts.size()));
+//
+//            return o;
+//        }).toList();
+        Map<String, ArrayList<Object>> sims = assignApplesWithLimits(employees, shifts);
+        OperationReturnObject op = new OperationReturnObject();
+        op.setCodeAndMessageAndReturnObject(200, "Shift simulation completed successfully", sims);
+
+        return op;
+    }
+
+    public Map<String, ArrayList<Object>> assignApplesWithLimits(List<Employee> employees, List<Shift> shifts) {
+
+        var shiftsMap = shifts.stream()
+                .collect(Collectors.toMap(Shift::getName, b -> new ArrayList<>(), (a, b) -> b, LinkedHashMap::new));
+
+        Iterator<Shift> shiftCycle = Stream.generate(() -> shifts)
+                .flatMap(List::stream)
+                .iterator();
+
+        for (Employee employee : employees) {
+            boolean assigned = false;
+
+            // Try assigning the employee to the next available shift
+            Set<Shift> tried = new HashSet<>();
+            while (!assigned && tried.size() < shifts.size()) {
+                var candidate = shiftCycle.next();
+                tried.add(candidate);
+
+                var applesInBasket = shiftsMap.get(candidate.getName());
+                if (applesInBasket.size() < candidate.getMaxPeople()) {
+                    applesInBasket.add(employee);
+                    assigned = true;
+                }
+            }
+
+            if (!assigned) {
+                log.error("Could not assign {}: all baskets full", employee.getName());
+            }
+        }
+
+        return shiftsMap;
+    }
+
     @Transactional
     @Override
     public OperationReturnObject switchActions(String action, JSONObject request) throws AuthorizationRequiredException {
         return switch (action) {
             case "createShift" -> createShift(request);
+            case "deleteShift" -> deleteShift(request);
+            case "simAssignment" -> shiftSimulation(request);
             case "shiftDetails" -> getShiftDetails(request);
             case "shifts" -> getShifts(request);
             case "assignToShift" -> assignEmployeesToShift(request);

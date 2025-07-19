@@ -2,12 +2,11 @@ package com.servicecops.project.services.schedule;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.Employee;
-import com.servicecops.project.models.database.Institution;
 import com.servicecops.project.models.database.Schedule;
 import com.servicecops.project.models.database.ScheduleRecord;
+import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.repositories.*;
 import com.servicecops.project.services.base.BaseWebActionsService;
-import com.servicecops.project.utils.OperationReturn;
 import com.servicecops.project.utils.OperationReturnObject;
 import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import lombok.Getter;
@@ -24,15 +23,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
 
-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
 
 import static java.time.LocalTime.now;
 
@@ -55,6 +45,7 @@ public class ScheduleService extends BaseWebActionsService {
     ID("id"),
     INSTITUTION_ID("institutionId"),
     DEPARTMENT_ID("departmentId"),
+    SCHEDULE_ID("scheduleId"),
     DESCRIPTION("description"),
     NO_OF_EMPLOYEES("noOfEmployees"),
     MANAGER_NAME("managerName"),
@@ -75,10 +66,10 @@ public class ScheduleService extends BaseWebActionsService {
   public OperationReturnObject switchActions(String action, JSONObject request) throws AuthorizationRequiredException {
     return switch (action) {
       case "save" -> this.createSchedule(request);
-      case "edit" -> this.edit(request);
+      case "getMySchedules" -> this.getMySchedules(request);
+      case "edit" -> this.editSchedule(request);
       case "delete" -> this.delete(request);
-      case "findByInstitution" -> this.findByInstitutionId(request);
-      case "findByDepartmentIdAndInstitutionId" -> this.findByDepartmentIdAndInstitutionId(request);
+//      case "findByDepartmentIdAndInstitutionId" -> this.findByDepartmentIdAndInstitutionId(request);
 
       default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
     };
@@ -98,14 +89,30 @@ public class ScheduleService extends BaseWebActionsService {
     requiresAuth();
     requires(request, Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data, Params.INSTITUTION_ID.getLabel(), Params.DEPARTMENT_ID.getLabel(),
-      Params.START_TIME.getLabel(), Params.END_TIME.getLabel());
+    Integer institutionId = null;
 
-    Integer institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
+    if(getUserDomain() == AppDomains.BACK_OFFICE){
+      requires(data, Params.INSTITUTION_ID.getLabel(), Params.DEPARTMENT_ID.getLabel(),
+        Params.START_TIME.getLabel(), Params.END_TIME.getLabel());
+      institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
+    }
+
+    if(getUserDomain() == AppDomains.INSTITUTION){
+      requires(data, Params.DEPARTMENT_ID.getLabel(),
+        Params.START_TIME.getLabel(), Params.END_TIME.getLabel());
+      institutionId = authenticatedUser().getInstitutionId();
+    }
+
+
+
+
     Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
+    Integer finalInstitutionId = institutionId;
+
 
     institutionRepository.findById(institutionId.longValue())
-      .orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + institutionId));
+      .orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + finalInstitutionId));
+
     departmentRepository.findById(departmentId.longValue())
       .orElseThrow(() -> new IllegalArgumentException("Department not found with id: " + departmentId));
 
@@ -157,62 +164,92 @@ public class ScheduleService extends BaseWebActionsService {
     return res;
   }
 
-  public OperationReturnObject findByInstitutionId(JSONObject request) throws AuthorizationRequiredException {
+  public OperationReturnObject getMySchedules(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data, Params.INSTITUTION_ID.getLabel(), Params.DEPARTMENT_ID.getLabel(),
-      Params.START_TIME.getLabel(), Params.END_TIME.getLabel(), Params.MAX_PEOPLE.getLabel());
-    Integer institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
-    Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
 
-    if (institutionId == null || departmentId == null) {
-      OperationReturnObject res = new OperationReturnObject();
-      res.setCodeAndMessageAndReturnObject(200, "missing fields required", null);
-      return res;
+    Integer institutionId = null;
+
+    if(getUserDomain() == AppDomains.BACK_OFFICE){
+      requires(data, Params.DEPARTMENT_ID.getLabel(),
+       Params.INSTITUTION_ID.getLabel());
+      institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
     }
 
+    if(getUserDomain() == AppDomains.INSTITUTION){
+      requires(data, Params.DEPARTMENT_ID.getLabel());
+      institutionId = authenticatedUser().getInstitutionId();
+    }
+
+    if (institutionId == null) {
+      throw new IllegalArgumentException("Institution not found with id: " + institutionId);
+    }
+    Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
+
+    Optional<List<Schedule>> institutionSchedules = scheduleRepository.findAllByInstitutionIdAndDepartmentId(institutionId,departmentId);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200, "returned successful ", null);
+    res.setCodeAndMessageAndReturnObject(200, "returned successful ", institutionSchedules);
     return res;
 
   }
 
-  public OperationReturnObject findByDepartmentIdAndInstitutionId(JSONObject request) throws AuthorizationRequiredException {
+  public OperationReturnObject findSchedulesByInstitutionId(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data, Params.INSTITUTION_ID.getLabel(), Params.DEPARTMENT_ID.getLabel(),
-      Params.START_TIME.getLabel(), Params.END_TIME.getLabel(), Params.MAX_PEOPLE.getLabel());
-    Integer institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
-    Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
 
-    if (institutionId == null || departmentId == null) {
-      OperationReturnObject res = new OperationReturnObject();
-      res.setCodeAndMessageAndReturnObject(200, "missing fields required", null);
-      return res;
+    Integer institutionId = null;
+
+    if(getUserDomain() == AppDomains.BACK_OFFICE){
+      requires(data, Params.DEPARTMENT_ID.getLabel(),
+        Params.INSTITUTION_ID.getLabel());
+      institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
     }
 
+    if(getUserDomain() == AppDomains.INSTITUTION){
+      requires(data, Params.DEPARTMENT_ID.getLabel());
+      institutionId = authenticatedUser().getInstitutionId();
+    }
+
+    if (institutionId == null) {
+      throw new IllegalArgumentException("Institution not found with id: " + institutionId);
+    }
+    Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
+
+    Optional<List<Schedule>> institutionSchedules = scheduleRepository.findAllByInstitutionIdAndDepartmentId(institutionId,departmentId);
+
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200, " successfull ", null);
+    res.setCodeAndMessageAndReturnObject(200, "returned successful ", institutionSchedules);
     return res;
 
   }
 
-  public OperationReturnObject edit(JSONObject request) throws AuthorizationRequiredException {
+  public OperationReturnObject editSchedule(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
 
     requires(request, Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data, Params.INSTITUTION_ID.getLabel(), Params.DEPARTMENT_ID.getLabel(),
-      Params.START_TIME.getLabel(), Params.END_TIME.getLabel(), Params.MAX_PEOPLE.getLabel());
-    Integer institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
+    requires(data,Params.SCHEDULE_ID.getLabel(), Params.DEPARTMENT_ID.getLabel(),
+      Params.START_TIME.getLabel(), Params.END_TIME.getLabel());
+
+    Integer scheduleId = data.getInteger(Params.SCHEDULE_ID.getLabel());
+    Integer institutionId = null;
+
+    if(getUserDomain() == AppDomains.BACK_OFFICE){
+      requires(data, Params.INSTITUTION_ID.getLabel());
+      institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
+    }
+
+    if(getUserDomain() == AppDomains.INSTITUTION){
+      institutionId = authenticatedUser().getInstitutionId();
+    }
+
     Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
     Timestamp startTime = null;
     Timestamp endTime = null;
-    Integer maxPeople = data.getInteger(Params.MAX_PEOPLE.getLabel());
-    if (institutionId == null || departmentId == null || startTime == null || endTime == null || maxPeople == null) {
+    if (institutionId == null || departmentId == null || startTime == null || endTime == null) {
       OperationReturnObject res = new OperationReturnObject();
       res.setCodeAndMessageAndReturnObject(200, "missing fields required", null);
       return res;

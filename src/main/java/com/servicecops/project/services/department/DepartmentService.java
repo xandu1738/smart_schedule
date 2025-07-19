@@ -71,30 +71,35 @@ public class DepartmentService extends BaseWebActionsService {
     String managerName = data.getString(Params.MANAGER_NAME.getLabel());
     Integer noOfEmployees = data.getInteger(Params.NO_OF_EMPLOYEES.getLabel());
     String description = data.getString(Params.DESCRIPTION.getLabel());
-    Long institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
 
-
-    Department department = departmentRepository.findByNameAndInstitutionId(departmentName, institutionId)
-      .orElse(null);
-
-    Institution institution = null;
-    if (institution == null) {
-      throw new IllegalArgumentException("institution not found with id: " + institutionId);
-    }
-
+    Integer institutionId = null;
 
     Department newDepartment = new Department();
-    newDepartment.setName(data.getString("name"));
-
-    if (getUserDomain() == AppDomains.BACK_OFFICE) {
-      institution = institutionRepository.findById(institutionId).orElseThrow(() -> new IllegalArgumentException("department with name " + departmentName + " already exists."));
-      newDepartment.setInstitutionId(institutionId);
-    }
 
     if (getUserDomain() == AppDomains.INSTITUTION) {
-      newDepartment.setInstitutionId(authenticatedUser().getInstitutionId().longValue());
+      institutionId = authenticatedUser().getInstitutionId();
     }
 
+    if (getUserDomain() == AppDomains.BACK_OFFICE) {
+      institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
+
+    }
+
+
+
+    if (institutionId == null) {
+      throw new IllegalArgumentException("institutionId is required");
+    }
+
+    Boolean departmentExists = departmentRepository.existsByNameAndInstitutionId(departmentName, institutionId.longValue());
+
+
+    if (departmentExists) {
+      throw new IllegalArgumentException("Department with name " + departmentName + " already exists");
+    }
+
+    newDepartment.setInstitutionId(institutionId.longValue());
+    newDepartment.setName(data.getString("name"));
     newDepartment.setManagerName(managerName);
     newDepartment.setNoOfEmployees(noOfEmployees);
     newDepartment.setDescription(description);

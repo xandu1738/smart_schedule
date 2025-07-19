@@ -28,7 +28,7 @@ public class EmployeeService extends BaseWebActionsService {
         STATUS("status"),
         DAYS_OFF_USED("days_off_used"),
         CREATED_BY("created_by"),
-        ACTIVE("active"),
+        ARCHIVED("archived"),
         DATA("data"),;
 
         private final String label;
@@ -92,7 +92,7 @@ public class EmployeeService extends BaseWebActionsService {
             requires(data, Params.DEPARTMENT_ID.getLabel());
 
             Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
-            List<Employee> employees = employeeRepository.findByDepartmentAndActive(departmentId, true);
+            List<Employee> employees = employeeRepository.findByDepartmentAndArchived(departmentId, true);
 
             OperationReturnObject res = new OperationReturnObject();
             res.setReturnCodeAndReturnObject(200, employees);
@@ -134,8 +134,8 @@ public class EmployeeService extends BaseWebActionsService {
                 employee.setDaysOffUsed(data.getInteger("days_off_used"));
             }
 
-            if (data.containsKey("active") && data.getBoolean("active") != null) {
-                employee.setActive(data.getBoolean("active"));
+            if (data.containsKey("archived") && data.getBoolean("archived") != null) {
+                employee.setArchived(data.getBoolean("archived"));
             }
 
             employee.setUpdatedAt(Timestamp.from(Instant.now()));
@@ -162,7 +162,7 @@ public class EmployeeService extends BaseWebActionsService {
 
             Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + request.getLong("id")));
 
-            employee.setActive(false);
+            employee.setArchived(false);
             employeeRepository.save(employee);
 
             OperationReturnObject res = new OperationReturnObject();
@@ -183,7 +183,7 @@ public class EmployeeService extends BaseWebActionsService {
 
             Long employeeId = data.getLong(Params.ID.getLabel());
 
-            Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + request.getLong("id")));
+            Employee employee = employeeRepository.findByIdAndArchived(employeeId.intValue(), true).orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + request.getLong("id")));
 
             OperationReturnObject res = new OperationReturnObject();
             res.setCodeAndMessageAndReturnObject(200, "", employee);

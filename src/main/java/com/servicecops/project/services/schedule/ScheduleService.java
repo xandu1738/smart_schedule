@@ -9,6 +9,7 @@ import com.servicecops.project.repositories.*;
 import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
 import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
+import jakarta.transaction.Transactional;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -226,6 +227,8 @@ public class ScheduleService extends BaseWebActionsService {
 
   }
 
+
+  @Transactional
   public OperationReturnObject editSchedule(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
 
@@ -249,11 +252,7 @@ public class ScheduleService extends BaseWebActionsService {
     Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
     Timestamp startTime = null;
     Timestamp endTime = null;
-    if (institutionId == null || departmentId == null || startTime == null || endTime == null) {
-      OperationReturnObject res = new OperationReturnObject();
-      res.setCodeAndMessageAndReturnObject(200, "missing fields required", null);
-      return res;
-    }
+
 
     if (StringUtils.isNotBlank(data.getString(Params.START_TIME.getLabel()))) {
       startTime = stringToTimestamp(data.getString(Params.START_TIME.getLabel()));
@@ -263,16 +262,64 @@ public class ScheduleService extends BaseWebActionsService {
       endTime = stringToTimestamp(data.getString(Params.END_TIME.getLabel()));
     }
 
-    Schedule newSchedule = new Schedule();
-    newSchedule.setDepartmentId(departmentId);
-    newSchedule.setInstitutionId(institutionId);
-    newSchedule.setStartDate(startTime);
-    newSchedule.setEndDate(endTime);
+    Schedule scheduleToUpdate = scheduleRepository.findById(scheduleId).orElse(null);
 
-    scheduleRepository.save(newSchedule);
+
+    if (scheduleToUpdate == null) {
+      throw new IllegalArgumentException("Schedule not found with id: " + scheduleId);
+    }
+
+    scheduleToUpdate.setStartDate(startTime);
+    scheduleToUpdate.setEndDate(endTime);
+
+
+
+    Schedule updatedSchedule = scheduleRepository.save(scheduleToUpdate);
+
+//  delete old schedule records
+    scheduleRecordRepository.deleteByScheduleId(updatedSchedule.getId());
+    scheduleRecordRepository.flush();
+
+//    create new scheduleRecord
+    Integer updatedScheduleId =  updatedSchedule.getId();
+
+    Optional<List<Employee>> employeesOptional = employeeRepository.findByDepartmentAndArchivedFalse(departmentId);
+    List<Employee> employees = employeesOptional.orElse(new ArrayList<>());
+
+    if (employees.isEmpty()) {
+      OperationReturnObject res = new OperationReturnObject();
+      res.setReturnCodeAndReturnMessage(200, "Schedule created, but no active employees found for this department to assign shifts.");
+      return res;
+    }
+
+    List<ScheduleRecord> createdScheduleRecords = new ArrayList<>();
+
+    LocalDate startDateRequest = Instant.ofEpochMilli(startTime.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+    LocalDate endDateRequest = Instant.ofEpochMilli(endTime.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+
+
+    for (LocalDate currentDate = startDateRequest; !currentDate.isAfter(endDateRequest); currentDate = currentDate.plusDays(1)) {
+      for (Employee employee : employees) {
+        Instant dailyStartTime = currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant dailyEndTime = currentDate.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant();
+
+        ScheduleRecord scheduleRecord = new ScheduleRecord();
+        scheduleRecord.setScheduleId(updatedScheduleId);
+        scheduleRecord.setEmployeeId(employee.getId());
+        scheduleRecord.setActive(true);
+        scheduleRecord.setStartTime(Timestamp.from(dailyStartTime));
+        scheduleRecord.setEndTime(Timestamp.from(dailyEndTime));
+        scheduleRecord.setDateCreated(Timestamp.from(Instant.now()));
+        scheduleRecord.setDateUpdated(Timestamp.from(Instant.now()));
+
+        createdScheduleRecords.add(scheduleRecord);
+      }
+    }
+
+    List<ScheduleRecord> savedScheduleRecords = scheduleRecordRepository.saveAll(createdScheduleRecords);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200, " successfully with id: " + newSchedule.getId() + "added", newSchedule);
+    res.setCodeAndMessageAndReturnObject(200, " successfully created new schedule records for: " + employees.size() + " employees",savedScheduleRecords);
     return res;
 
   }
@@ -286,7 +333,7 @@ public class ScheduleService extends BaseWebActionsService {
     Integer scheduleId = data.getInteger(Params.SCHEDULE_ID.getLabel());
 
     scheduleRepository.deleteById(scheduleId);
-    scheduleRecordRepository.deleteById(scheduleId);
+    scheduleRecordRepository.deleteByScheduleId(scheduleId);
 
     OperationReturnObject res = new OperationReturnObject();
     res.setReturnCodeAndReturnMessage(200, "schedule successfully removed");

@@ -103,10 +103,9 @@ public class ScheduleService extends BaseWebActionsService {
         Params.START_TIME.getLabel(), Params.END_TIME.getLabel());
       institutionId = authenticatedUser().getInstitutionId();
     }
-
-
-
-
+    if (institutionId == null) {
+      throw new IllegalArgumentException("Institution not found with id: " + institutionId);
+    }
     Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
     Integer finalInstitutionId = institutionId;
 
@@ -129,8 +128,7 @@ public class ScheduleService extends BaseWebActionsService {
 
     Integer createdScheduleId = newSchedule.getId();
 
-    Optional<List<Employee>> employeesOptional = employeeRepository.findByDepartmentAndArchivedFalse(departmentId);
-    List<Employee> employees = employeesOptional.orElse(new ArrayList<>());
+    List<Employee> employees = employeeRepository.findAllByDepartmentAndArchivedTrue(departmentId);
 
     if (employees.isEmpty()) {
       OperationReturnObject res = new OperationReturnObject();
@@ -277,14 +275,13 @@ public class ScheduleService extends BaseWebActionsService {
     Schedule updatedSchedule = scheduleRepository.save(scheduleToUpdate);
 
 //  delete old schedule records
-    scheduleRecordRepository.deleteByScheduleId(updatedSchedule.getId());
+    scheduleRecordRepository.deleteById(updatedSchedule.getId());
     scheduleRecordRepository.flush();
 
 //    create new scheduleRecord
     Integer updatedScheduleId =  updatedSchedule.getId();
 
-    Optional<List<Employee>> employeesOptional = employeeRepository.findByDepartmentAndArchivedFalse(departmentId);
-    List<Employee> employees = employeesOptional.orElse(new ArrayList<>());
+    List<Employee> employees = employeeRepository.findAllByDepartmentAndArchived(departmentId,false);
 
     if (employees.isEmpty()) {
       OperationReturnObject res = new OperationReturnObject();
@@ -333,7 +330,6 @@ public class ScheduleService extends BaseWebActionsService {
     Integer scheduleId = data.getInteger(Params.SCHEDULE_ID.getLabel());
 
     scheduleRepository.deleteById(scheduleId);
-    scheduleRecordRepository.deleteByScheduleId(scheduleId);
 
     OperationReturnObject res = new OperationReturnObject();
     res.setReturnCodeAndReturnMessage(200, "schedule successfully removed");

@@ -1,7 +1,8 @@
-package com.servicecops.project.models.database;
+package com.servicecops.project.services;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.jmsoft.Moonlight.helpers.EntityCommand;
+import com.servicecops.project.models.database.SystemUserModel;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.models.jpahelpers.sortingAndFiltering.NativeQueryHelperService;
 import com.servicecops.project.services.base.BaseWebActionsService;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class ReportManagerService extends BaseWebActionsService {

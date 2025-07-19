@@ -179,7 +179,7 @@ public class ShiftManagementService extends BaseWebActionsService {
             if (id != null) {
                 var swapRequest = shiftSwapRepository.getEmployeeSwapRequestById(id);
 
-                if (swapRequest != null && swapRequest.isEmpty()) {
+                if (swapRequest.isEmpty()) {
                     throw new IllegalStateException("No Swap request matches selected ID");
                 }
 
@@ -395,7 +395,7 @@ public class ShiftManagementService extends BaseWebActionsService {
 
         if (authenticatedUser.getInstitutionId() != null) {
             Department department = getDepartment(departmentId.longValue());
-            if (!Objects.equals(department.getInstitutionId(), authenticatedUser.getInstitutionId())) {
+            if (!Objects.equals(department.getInstitutionId(), authenticatedUser.getInstitutionId().longValue())) {
                 throw new AuthorizationRequiredException("You are not authorized to view shifts for this department");
             }
         }

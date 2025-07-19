@@ -123,6 +123,56 @@ public class InstitutionService extends BaseWebActionsService {
 
     return res;
   }
+  public OperationReturnObject getAllDepartmentsInInstitution(JSONObject request) throws AuthorizationRequiredException {
+    requiresAuth();
+
+    List<Institution> institutions = institutionRepository.findAll(); // Explicitly type List
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions); // Returns list of Institution objects
+
+    return res;
+  }
+  public OperationReturnObject getAllActiveDepartmentsInInstitution(JSONObject request) throws AuthorizationRequiredException {
+    requiresAuth();
+
+    List<Institution> institutions = institutionRepository.findAll(); // Explicitly type List
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions); // Returns list of Institution objects
+
+    return res;
+  }
+  public OperationReturnObject getAllInActiveDepartmentsInInstitution(JSONObject request) throws AuthorizationRequiredException {
+    requiresAuth();
+
+    List<Institution> institutions = institutionRepository.findAll(); // Explicitly type List
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions); // Returns list of Institution objects
+
+    return res;
+  }
+  public OperationReturnObject getAllEmployeesInInstitution(JSONObject request) throws AuthorizationRequiredException {
+    requiresAuth();
+
+    List<Institution> institutions = institutionRepository.findAll(); // Explicitly type List
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions); // Returns list of Institution objects
+
+    return res;
+  }
+  public OperationReturnObject getAllSchedulesInInstitution(JSONObject request) throws AuthorizationRequiredException {
+    requiresAuth();
+
+    List<Institution> institutions = institutionRepository.findAll(); // Explicitly type List
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions); // Returns list of Institution objects
+
+    return res;
+  }
 
   public OperationReturnObject findById(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();

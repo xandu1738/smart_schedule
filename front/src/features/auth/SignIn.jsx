@@ -25,10 +25,8 @@ export default function SignIn() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Sign in attempted with:", formData);
 
     authApi.login(formData).then((res) => {
-        console.log("Login response:", res?.data)
         dispatch(loginSuccess({
             ...res?.data?.returnObject
         }))

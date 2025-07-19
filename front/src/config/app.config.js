@@ -16,5 +16,15 @@ export const SERVICES = {
         ACTION: {
             GET_ALL: "getAll"
         }
-    }
+    },
+    DEPARTMENT: {
+        name: "Department",
+        ACTION: {
+            GET_ALL: "getAll",
+            SAVE: "save",
+            DELETE: "delete",
+            EDIT: "edit",
+            GET_SINGLE: "getSingle"
+        }
+    },
 }

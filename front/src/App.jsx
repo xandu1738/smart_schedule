@@ -15,6 +15,7 @@ import { Route, Routes, Navigate } from "react-router";
 import { AxiosConfiguration } from "./helpers/axios/axios_helper.js";
 import SignIn from "./features/auth/SignIn.jsx";
 import Accounts from "./features/accounts/Accounts.jsx";
+import DepartmentDetails from "./features/departments/DepartmentDetails.jsx";
 
 const App = () => {
     // intiialize services
@@ -38,11 +39,9 @@ const App = () => {
                         </ProtectedRoute>
                     }
                 >
-                    <Route index element={<h1>Institution</h1>} />
                 </Route>
-                <Route path={APP_ROUTE.DEPARTMENTS} element={<Departments />}>
-                    <Route index element={<h1>Department</h1>} />
-                </Route>
+                <Route path={APP_ROUTE.DEPARTMENTS} element={<Departments />} />
+                <Route path={`${APP_ROUTE.DEPARTMENTS}/:id`} element={<DepartmentDetails />} />
                 <Route path={APP_ROUTE.SCHEDULES} element={<Schedules />}>
                     <Route index element={<h1>Schedule</h1>} />
                 </Route>

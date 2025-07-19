@@ -333,7 +333,7 @@ public class ScheduleService extends BaseWebActionsService {
     Integer scheduleId = data.getInteger(Params.SCHEDULE_ID.getLabel());
 
     scheduleRepository.deleteById(scheduleId);
-    scheduleRecordRepository.deleteById(scheduleId);
+    scheduleRecordRepository.deleteByScheduleId(scheduleId);
 
     OperationReturnObject res = new OperationReturnObject();
     res.setReturnCodeAndReturnMessage(200, "schedule successfully removed");

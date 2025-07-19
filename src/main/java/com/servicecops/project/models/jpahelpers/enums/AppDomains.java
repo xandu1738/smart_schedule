@@ -9,5 +9,5 @@ package com.servicecops.project.models.jpahelpers.enums;
  */
 public enum AppDomains {
     BACK_OFFICE, // Users in this domain are more of administrators
-    CLIENT_SIDE // roles here will only affect the client side, should not even be visible on the BACK_OFFICE
+    INSTITUTION
 }

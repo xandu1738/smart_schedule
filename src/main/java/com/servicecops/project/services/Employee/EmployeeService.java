@@ -92,7 +92,7 @@ public class EmployeeService extends BaseWebActionsService {
             requires(data, Params.DEPARTMENT_ID.getLabel());
 
             Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
-            List<Employee> employees = employeeRepository.findByDepartmentAndArchived(departmentId, true);
+            List<Employee> employees = employeeRepository.findAllByDepartment(departmentId);
 
             OperationReturnObject res = new OperationReturnObject();
             res.setReturnCodeAndReturnObject(200, employees);

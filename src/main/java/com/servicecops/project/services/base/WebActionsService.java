@@ -1,7 +1,6 @@
 package com.servicecops.project.services;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.servicecops.project.models.database.ReportManagerService;
 import com.servicecops.project.services.department.DepartmentService;
 import com.servicecops.project.services.Employee.EmployeeService;
 import com.servicecops.project.services.auth.AuthService;

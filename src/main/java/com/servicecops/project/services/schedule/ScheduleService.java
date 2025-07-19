@@ -102,10 +102,9 @@ public class ScheduleService extends BaseWebActionsService {
         Params.START_TIME.getLabel(), Params.END_TIME.getLabel());
       institutionId = authenticatedUser().getInstitutionId();
     }
-
-
-
-
+    if (institutionId == null) {
+      throw new IllegalArgumentException("Institution not found with id: " + institutionId);
+    }
     Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
     Integer finalInstitutionId = institutionId;
 
@@ -128,8 +127,7 @@ public class ScheduleService extends BaseWebActionsService {
 
     Integer createdScheduleId = newSchedule.getId();
 
-    Optional<List<Employee>> employeesOptional = employeeRepository.findByDepartmentAndArchivedTrue(departmentId);
-    List<Employee> employees = employeesOptional.orElse(new ArrayList<>());
+    List<Employee> employees = employeeRepository.findAllByDepartmentAndArchivedTrue(departmentId);
 
     if (employees.isEmpty()) {
       OperationReturnObject res = new OperationReturnObject();

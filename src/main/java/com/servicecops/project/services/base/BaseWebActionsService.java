@@ -245,10 +245,14 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
      *
      * @param domain AppDomains - The domain in quest
      */
-    public void belongsTo(AppDomains domain) {
+    public void belongsTo(AppDomains... domains) {
+
+      for (AppDomains domain : domains) {
         if (getUserDomain() != domain) {
-            throw new IllegalStateException("You have no access to the " + domain + " services");
+          throw new IllegalStateException("You have no access to the " + domain + " services");
         }
+      }
+
     }
 
     /**

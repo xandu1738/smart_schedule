@@ -3,6 +3,7 @@ package com.servicecops.project.services.department;
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.Department;
 import com.servicecops.project.models.database.Institution;
+import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.repositories.DepartmentRepository;
 import com.servicecops.project.repositories.InstitutionRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
@@ -60,10 +61,11 @@ public class DepartmentService extends BaseWebActionsService {
 
   public OperationReturnObject add(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
-    requires(request,Params.DATA.getLabel());
+    requires(request, Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data,Params.NAME.getLabel(),Params.INSTITUTION_ID.getLabel(), Params.MANAGER_NAME.getLabel(),
-        Params.NO_OF_EMPLOYEES.getLabel(), Params.DESCRIPTION.getLabel());
+
+    requires(data, Params.NAME.getLabel(), Params.MANAGER_NAME.getLabel(),
+      Params.NO_OF_EMPLOYEES.getLabel(), Params.DESCRIPTION.getLabel());
 
     String departmentName = data.getString(Params.NAME.getLabel());
     String managerName = data.getString(Params.MANAGER_NAME.getLabel());
@@ -72,21 +74,27 @@ public class DepartmentService extends BaseWebActionsService {
     Long institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
 
 
-    Institution institution = institutionRepository.findById(institutionId).orElse(null);
     Department department = departmentRepository.findByNameAndInstitutionId(departmentName, institutionId)
-        .orElse(null);
+      .orElse(null);
 
+    Institution institution = null;
     if (institution == null) {
       throw new IllegalArgumentException("institution not found with id: " + institutionId);
     }
 
-    if (institution != null && department != null) {
-      throw new IllegalArgumentException("department with name " + departmentName + " already exists.");
-    }
 
     Department newDepartment = new Department();
     newDepartment.setName(data.getString("name"));
-    newDepartment.setInstitutionId(institutionId);
+
+    if (getUserDomain() == AppDomains.BACK_OFFICE) {
+      institution = institutionRepository.findById(institutionId).orElseThrow(() -> new IllegalArgumentException("department with name " + departmentName + " already exists."));
+      newDepartment.setInstitutionId(institutionId);
+    }
+
+    if (getUserDomain() == AppDomains.INSTITUTION) {
+      newDepartment.setInstitutionId(authenticatedUser().getInstitutionId().longValue());
+    }
+
     newDepartment.setManagerName(managerName);
     newDepartment.setNoOfEmployees(noOfEmployees);
     newDepartment.setDescription(description);
@@ -98,7 +106,7 @@ public class DepartmentService extends BaseWebActionsService {
 
     System.out.println("New department: " + newDepartment.getName() + "successfully created");
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200,newDepartment.getName() + " successfully added", newDepartment);
+    res.setCodeAndMessageAndReturnObject(200, newDepartment.getName() + " successfully added", newDepartment);
 
     return res;
   }
@@ -107,9 +115,21 @@ public class DepartmentService extends BaseWebActionsService {
     requiresAuth();
     requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data,Params.INSTITUTION_ID.getLabel());
 
-    Long institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
+    Long institutionId = null;
+
+    if( getUserDomain() == AppDomains.BACK_OFFICE) {
+      requires(data,Params.INSTITUTION_ID.getLabel());
+      institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
+    }
+
+    if (getUserDomain() == AppDomains.BACK_OFFICE) {
+      institutionId = authenticatedUser().getInstitutionId().longValue();
+    }
+
+    if(institutionId == null) {
+      throw new IllegalArgumentException("institution id not found: " + institutionId);
+    }
 
     List<Department> departments = departmentRepository.findByInstitutionId(institutionId).orElseThrow(() -> new IllegalArgumentException("not found "));;
 

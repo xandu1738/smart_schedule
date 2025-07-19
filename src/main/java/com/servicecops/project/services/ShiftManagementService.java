@@ -2,6 +2,7 @@ package com.servicecops.project.services;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.*;
+import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.models.jpahelpers.enums.OffRequestStatus;
 import com.servicecops.project.models.jpahelpers.enums.ShiftSwapStatus;
 import com.servicecops.project.repositories.*;
@@ -434,24 +435,23 @@ public class ShiftManagementService extends BaseWebActionsService {
         return returnObject;
     }
 
-    @Transactional
-    @Override
-    public OperationReturnObject switchActions(String action, JSONObject request) throws AuthorizationRequiredException {
-        return switch (action) {
-            case "createShift" -> createShift(request);
-            case "simAssignment" -> shiftSimulation(request);
-            case "shiftDetails" -> getShiftDetails(request);
-            case "shifts" -> getShifts(request);
-            case "assignToShift" -> assignEmployeesToShift(request);
-            case "swapRequest" -> makeSwapRequest(request);
-            case "swapRequests" -> getSwapRequests(request);
-            case "approveSwap" -> approveSwapRequest(request);
-            case "offRequest" -> timeOffRequest(request);
-            case "offRequests" -> getTimeOffRequests(request);
-            case "myOffRequests" -> myTimeOffRequests(request);
-            case "offApproval" -> timeOffApproval(request);
-            default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
-        };
+    private OperationReturnObject deleteShift(JSONObject request) {
+        belongsTo(AppDomains.INSTITUTION);
+        requires(request, "search");
+
+        JSONObject search = request.getJSONObject("search");
+        if (search == null) {
+            search = new JSONObject();
+        }
+        requires(search, "shift_id");
+        Integer shiftId = search.getInteger("shift_id");
+
+        Shift shift = getShift(shiftId);
+        shiftRepository.delete(shift);
+
+        OperationReturnObject res = new OperationReturnObject();
+        res.setReturnCodeAndReturnMessage(200, "Shift deleted successfully");
+        return res;
     }
 
     private OperationReturnObject shiftSimulation(JSONObject request) {
@@ -525,5 +525,26 @@ public class ShiftManagementService extends BaseWebActionsService {
         }
 
         return shiftsMap;
+    }
+
+    @Transactional
+    @Override
+    public OperationReturnObject switchActions(String action, JSONObject request) throws AuthorizationRequiredException {
+        return switch (action) {
+            case "createShift" -> createShift(request);
+            case "deleteShift" -> deleteShift(request);
+            case "simAssignment" -> shiftSimulation(request);
+            case "shiftDetails" -> getShiftDetails(request);
+            case "shifts" -> getShifts(request);
+            case "assignToShift" -> assignEmployeesToShift(request);
+            case "swapRequest" -> makeSwapRequest(request);
+            case "swapRequests" -> getSwapRequests(request);
+            case "approveSwap" -> approveSwapRequest(request);
+            case "offRequest" -> timeOffRequest(request);
+            case "offRequests" -> getTimeOffRequests(request);
+            case "myOffRequests" -> myTimeOffRequests(request);
+            case "offApproval" -> timeOffApproval(request);
+            default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
+        };
     }
 }

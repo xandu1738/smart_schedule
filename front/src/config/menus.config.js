@@ -42,11 +42,11 @@ export const APP_MENUS = [
 		name: "Schedules",
 		path: buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.SCHEDULES),
 	},
-	{
-		icon: "ArrowLeftRight",
-		name: "Shifts",
-		path: buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.SHIFTS),
-	},
+	// {
+	// 	icon: "ArrowLeftRight",
+	// 	name: "Shifts",
+	// 	path: buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.SHIFTS),
+	// },
     {
         icon: "User",
         name: "Accounts",

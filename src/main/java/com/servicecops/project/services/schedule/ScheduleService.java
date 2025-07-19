@@ -279,40 +279,17 @@ public class ScheduleService extends BaseWebActionsService {
 
   public OperationReturnObject delete(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
-
     requires(request, Params.DATA.getLabel());
+
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data, Params.INSTITUTION_ID.getLabel(), Params.DEPARTMENT_ID.getLabel(),
-      Params.START_TIME.getLabel(), Params.END_TIME.getLabel(), Params.MAX_PEOPLE.getLabel());
-    Integer institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
-    Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
-    Timestamp startTime = null;
-    Timestamp endTime = null;
-    Integer maxPeople = data.getInteger(Params.MAX_PEOPLE.getLabel());
-    if (institutionId == null || departmentId == null || startTime == null || endTime == null || maxPeople == null) {
-      OperationReturnObject res = new OperationReturnObject();
-      res.setCodeAndMessageAndReturnObject(200, "missing fields required", null);
-      return res;
-    }
+    requires(data, Params.SCHEDULE_ID.getLabel());
+    Integer scheduleId = data.getInteger(Params.SCHEDULE_ID.getLabel());
 
-    if (StringUtils.isNotBlank(data.getString(Params.START_TIME.getLabel()))) {
-      startTime = stringToTimestamp(data.getString(Params.START_TIME.getLabel()));
-    }
-
-    if (StringUtils.isNotBlank(data.getString(Params.END_TIME.getLabel()))) {
-      endTime = stringToTimestamp(data.getString(Params.END_TIME.getLabel()));
-    }
-
-    Schedule newSchedule = new Schedule();
-    newSchedule.setDepartmentId(departmentId);
-    newSchedule.setInstitutionId(institutionId);
-    newSchedule.setStartDate(startTime);
-    newSchedule.setEndDate(endTime);
-
-    scheduleRepository.save(newSchedule);
+    scheduleRepository.deleteById(scheduleId);
+    scheduleRecordRepository.deleteById(scheduleId);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200, " successfully with id: " + newSchedule.getId() + "added", newSchedule);
+    res.setReturnCodeAndReturnMessage(200, "schedule successfully removed");
     return res;
 
   }

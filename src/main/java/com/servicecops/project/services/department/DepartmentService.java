@@ -128,7 +128,7 @@ public class DepartmentService extends BaseWebActionsService {
       institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
     }
 
-    if (getUserDomain() == AppDomains.BACK_OFFICE) {
+    if (getUserDomain() == AppDomains.INSTITUTION) {
       institutionId = authenticatedUser().getInstitutionId().longValue();
     }
 

@@ -121,7 +121,7 @@ public class ScheduleService extends BaseWebActionsService {
 
     Integer createdScheduleId = newSchedule.getId();
 
-    Optional<List<Employee>> employeesOptional = employeeRepository.findByDepartmentAndActiveTrue(departmentId);
+    Optional<List<Employee>> employeesOptional = employeeRepository.findByDepartmentAndArchivedTrue(departmentId);
     List<Employee> employees = employeesOptional.orElse(new ArrayList<>());
 
     if (employees.isEmpty()) {
@@ -174,7 +174,7 @@ public class ScheduleService extends BaseWebActionsService {
 
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200, "returned successfull ", null);
+    res.setCodeAndMessageAndReturnObject(200, "returned successful ", null);
     return res;
 
   }

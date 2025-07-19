@@ -7,6 +7,7 @@ import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.repositories.DepartmentRepository;
 import com.servicecops.project.repositories.InstitutionRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
+import com.servicecops.project.services.department.Dtos.DepartmentResponseDTO;
 import com.servicecops.project.utils.OperationReturnObject;
 import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import lombok.Getter;
@@ -110,6 +111,15 @@ public class DepartmentService extends BaseWebActionsService {
     departmentRepository.save(newDepartment);
 
     System.out.println("New department: " + newDepartment.getName() + "successfully created");
+
+
+    DepartmentResponseDTO response = new DepartmentResponseDTO();
+    response.setId(newDepartment.getId());
+    response.setName(newDepartment.getName());
+    response.setDescription(newDepartment.getDescription());
+    response.setCreatedAt(newDepartment.getCreatedAt());
+    response.setActive(newDepartment.isActive());
+
     OperationReturnObject res = new OperationReturnObject();
     res.setCodeAndMessageAndReturnObject(200, newDepartment.getName() + " successfully added", newDepartment);
 
@@ -135,10 +145,24 @@ public class DepartmentService extends BaseWebActionsService {
       throw new IllegalArgumentException("institution id not found: " + institutionId);
     }
 
-    List<Department> departments = departmentRepository.findByInstitutionId(institutionId).orElseThrow(() -> new IllegalArgumentException("not found "));;
+    List<Department> departments = departmentRepository.findByInstitutionId(institutionId).orElseThrow(() -> new IllegalArgumentException("not found "));
+
+
+    List<DepartmentResponseDTO> response = departments.stream()
+      .map(dep -> new DepartmentResponseDTO(
+        dep.getId(),
+        dep.getName(),
+        dep.getInstitutionId(),
+        dep.getDescription(),
+        dep.getNoOfEmployees(),
+        dep.getManagerName(),
+        dep.getCreatedAt(),
+        dep.isActive()
+      ))
+      .toList();
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setReturnCodeAndReturnObject(200, departments);
+    res.setCodeAndMessageAndReturnObject(200,"data returned successfully", response);
 
     return res;
   }
@@ -150,10 +174,17 @@ public class DepartmentService extends BaseWebActionsService {
 
     Long departmentId = data.getLong(Params.DEPARTMENT_ID.getLabel());
 
-    Department departments = departmentRepository.findById(departmentId).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
+    Department department = departmentRepository.findById(departmentId).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
+
+    DepartmentResponseDTO response = new DepartmentResponseDTO();
+    response.setId(department.getId());
+    response.setName(department.getName());
+    response.setDescription(department.getDescription());
+//    response.setCreatedAt(department.getCreatedAt());
+    response.setActive(department.isActive());
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200,"request successful", departments);
+    res.setCodeAndMessageAndReturnObject(200,"request successful", response);
 
     return res;
   }
@@ -192,8 +223,17 @@ public class DepartmentService extends BaseWebActionsService {
 
     departmentRepository.save(department);
 
+
+    DepartmentResponseDTO response = new DepartmentResponseDTO();
+    response.setId(department.getId());
+    response.setName(department.getName());
+    response.setDescription(department.getDescription());
+//    response.setCreatedAt(department.getCreatedAt());
+    response.setActive(department.isActive());
+
+
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200,"Department edited successfully" ,department);
+    res.setCodeAndMessageAndReturnObject(200,"Department edited successfully" ,response);
 
     return res;
   }
@@ -210,8 +250,16 @@ public class DepartmentService extends BaseWebActionsService {
     department.setActive(false);
     departmentRepository.save(department);
 
+    DepartmentResponseDTO response = new DepartmentResponseDTO();
+    response.setId(department.getId());
+    response.setName(department.getName());
+    response.setDescription(department.getDescription());
+//    response.setCreatedAt(department.getCreatedAt());
+    response.setActive(department.isActive());
+
+
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200,"edited successfully" ,department);
+    res.setCodeAndMessageAndReturnObject(200,"edited successfully" ,response);
 
     return res;
   }

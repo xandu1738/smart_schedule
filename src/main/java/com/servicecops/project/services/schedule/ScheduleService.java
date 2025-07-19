@@ -68,8 +68,10 @@ public class ScheduleService extends BaseWebActionsService {
     return switch (action) {
       case "save" -> this.createSchedule(request);
       case "getMySchedules" -> this.getMySchedules(request);
+      case "getSingleSchedule" -> this.getSingleSchedule(request);
       case "edit" -> this.editSchedule(request);
       case "delete" -> this.delete(request);
+
 //      case "findByDepartmentIdAndInstitutionId" -> this.findByDepartmentIdAndInstitutionId(request);
 
       default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
@@ -195,6 +197,25 @@ public class ScheduleService extends BaseWebActionsService {
     return res;
 
   }
+  public OperationReturnObject getSingleSchedule(JSONObject request) throws AuthorizationRequiredException {
+    requiresAuth();
+    requires(request, Params.DATA.getLabel());
+    JSONObject data = request.getJSONObject(Params.DATA.getLabel());
+    requires(data, Params.SCHEDULE_ID.getLabel());
+    Integer scheduleId = data.getInteger(Params.SCHEDULE_ID.getLabel());
+
+
+    Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
+    if (schedule == null) {
+      throw new IllegalArgumentException("Schedule not found with ID: " + scheduleId);
+    }
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setCodeAndMessageAndReturnObject(200, "schedule return successfully: ", schedule);
+    return res;
+
+  }
+
 
   public OperationReturnObject findSchedulesByInstitutionId(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();

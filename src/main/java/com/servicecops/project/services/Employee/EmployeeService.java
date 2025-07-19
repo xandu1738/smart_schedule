@@ -159,11 +159,11 @@ public class EmployeeService extends BaseWebActionsService {
 
             Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + request.getLong("id")));
 
-            employee.setArchived(true);
+            employee.setArchived(false);
             employeeRepository.save(employee);
 
             OperationReturnObject res = new OperationReturnObject();
-            res.setCodeAndMessageAndReturnObject(200,"deleted successfully", employee);
+            res.setCodeAndMessageAndReturnObject(200,"deleted successfully" ,employee);
 
             return res;
         } catch (AuthorizationRequiredException e) {

@@ -14,14 +14,27 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Optional;
+
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.time.LocalTime.now;
 
 
 @RequiredArgsConstructor
@@ -72,9 +85,17 @@ public class ScheduleService extends BaseWebActionsService {
   }
 
 
+
+  private LocalDate parseLocalDate(String dateString) {
+    try {
+      return LocalDate.parse(dateString);
+    } catch (DateTimeParseException e) {
+      throw new IllegalArgumentException("Invalid date format for startTime or endTime. Expected YYYY-MM-DD. Error: " + e.getMessage());
+    }
+  }
+
   public OperationReturnObject createSchedule(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
-
     requires(request, Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
     requires(data, Params.INSTITUTION_ID.getLabel(), Params.DEPARTMENT_ID.getLabel(),
@@ -82,82 +103,59 @@ public class ScheduleService extends BaseWebActionsService {
 
     Integer institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
     Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
-    Timestamp startTimeRequest = null;
-    Timestamp endTimeRequest = null;
 
-    // Validate institution and department existence (optional but good practice)
     institutionRepository.findById(institutionId.longValue())
       .orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + institutionId));
     departmentRepository.findById(departmentId.longValue())
       .orElseThrow(() -> new IllegalArgumentException("Department not found with id: " + departmentId));
 
-
-    if (StringUtils.isNotBlank(data.getString(Params.START_TIME.getLabel()))) {
-      startTimeRequest = stringToTimestamp(data.getString(Params.START_TIME.getLabel()));
-    }
-
-    if (StringUtils.isNotBlank(data.getString(Params.END_TIME.getLabel()))) {
-      endTimeRequest = stringToTimestamp(data.getString(Params.END_TIME.getLabel()));
-    }
-
+    LocalDate startDateRequest = parseLocalDate(data.getString(Params.START_TIME.getLabel()));
+    LocalDate endDateRequest = parseLocalDate(data.getString(Params.END_TIME.getLabel()));
 
     Schedule newSchedule = new Schedule();
     newSchedule.setDepartmentId(departmentId);
     newSchedule.setInstitutionId(institutionId);
-    newSchedule.setStartDate(startTimeRequest);
-    newSchedule.setEndDate(endTimeRequest);
-
+    newSchedule.setStartDate(Timestamp.from(startDateRequest.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+    newSchedule.setEndDate(Timestamp.from(endDateRequest.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant()));
     scheduleRepository.save(newSchedule);
 
     Integer createdScheduleId = newSchedule.getId();
 
-    List<Employee> employees = employeeRepository.findByDepartmentAndActiveTrue(departmentId)
-      .orElse(new ArrayList<>());
+    Optional<List<Employee>> employeesOptional = employeeRepository.findByDepartmentAndArchivedTrue(departmentId);
+    List<Employee> employees = employeesOptional.orElse(new ArrayList<>());
 
     if (employees.isEmpty()) {
-
       OperationReturnObject res = new OperationReturnObject();
       res.setCodeAndMessageAndReturnObject(200, "Schedule created, but no active employees found for this department to assign shifts.", newSchedule);
       return res;
-
     }
-
-    // 3. Iterate through each day within the schedule period and assign shifts
-    LocalDate startLocalDate = LocalDate.ofInstant(startTimeRequest.toInstant(), ZoneId.systemDefault());
-    LocalDate endLocalDate = LocalDate.ofInstant(endTimeRequest.toInstant(), ZoneId.systemDefault());
 
     List<ScheduleRecord> createdScheduleRecords = new ArrayList<>();
 
-    for (LocalDate date = startLocalDate; !date.isAfter(endLocalDate); date = date.plusDays(1)) {
+    for (LocalDate currentDate = startDateRequest; !currentDate.isAfter(endDateRequest); currentDate = currentDate.plusDays(1)) {
       for (Employee employee : employees) {
+        Instant dailyStartTime = currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
+        Instant dailyEndTime = currentDate.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant();
+
         ScheduleRecord scheduleRecord = new ScheduleRecord();
         scheduleRecord.setScheduleId(createdScheduleId);
         scheduleRecord.setEmployeeId(employee.getId());
-        scheduleRecord.setShiftId(null);
-        scheduleRecord.setTimeOffId(null);
         scheduleRecord.setActive(true);
-
-        Instant dailyStartTime = date.atTime(startTimeRequest.toInstant().atZone(ZoneId.systemDefault()).toLocalTime())
-          .atZone(ZoneId.systemDefault()).toInstant();
-        Instant dailyEndTime = date.atTime(endTimeRequest.toInstant().atZone(ZoneId.systemDefault()).toLocalTime())
-          .atZone(ZoneId.systemDefault()).toInstant();
-
-        // overnight shifts
-        if (dailyEndTime.isBefore(dailyStartTime)) {
-          dailyEndTime = dailyEndTime.plus(1, ChronoUnit.DAYS);
-        }
-
-
         scheduleRecord.setStartTime(Timestamp.from(dailyStartTime));
         scheduleRecord.setEndTime(Timestamp.from(dailyEndTime));
+        scheduleRecord.setDateCreated(Timestamp.from(Instant.now()));
+        scheduleRecord.setDateUpdated(Timestamp.from(Instant.now()));
 
         createdScheduleRecords.add(scheduleRecord);
-        scheduleRecordRepository.save(scheduleRecord);
       }
     }
-    return null;
-  }
 
+    scheduleRecordRepository.saveAll(createdScheduleRecords);
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setCodeAndMessageAndReturnObject(200, "Schedule successfully created with ID: " + createdScheduleId + " and " + createdScheduleRecords.size() + " employee shifts assigned.", newSchedule);
+    return res;
+  }
 
   public OperationReturnObject findByInstitutionId(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
@@ -176,7 +174,7 @@ public class ScheduleService extends BaseWebActionsService {
 
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200, "returned successfull ", null);
+    res.setCodeAndMessageAndReturnObject(200, "returned successful ", null);
     return res;
 
   }

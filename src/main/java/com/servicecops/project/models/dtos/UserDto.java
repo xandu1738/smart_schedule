@@ -9,6 +9,7 @@ public record UserDto(
         String lastName,
         String email,
         String roleCode,
+        String domain,
         Timestamp createdAt,
         Timestamp lastLoggedInAt,
         Boolean isActive,

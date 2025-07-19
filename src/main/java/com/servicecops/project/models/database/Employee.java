@@ -40,13 +40,16 @@ public class Employee {
   @Column(name = "created_by")
   private Long createdBy;
 
-  @Column(name = "active")
-  private boolean active;
+  @Column(name = "archived")
+  private boolean archived;
 
   @Column(name = "updated_at")
   private Timestamp updatedAt;
 
   @Column(name = "updated_by")
   private Long updatedBy;
+
+  @Column(name = "user_id")
+  private Long userId;
 
 }

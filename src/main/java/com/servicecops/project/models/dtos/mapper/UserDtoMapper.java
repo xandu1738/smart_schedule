@@ -1,9 +1,11 @@
 package com.servicecops.project.models.dtos.mapper;
 
 import com.servicecops.project.models.database.Institution;
+import com.servicecops.project.models.database.SystemRoleModel;
 import com.servicecops.project.models.database.SystemUserModel;
 import com.servicecops.project.models.dtos.UserDto;
 import com.servicecops.project.repositories.InstitutionRepository;
+import com.servicecops.project.repositories.SystemRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +16,8 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class UserDtoMapper implements Function<SystemUserModel, UserDto> {
     private final InstitutionRepository institutionRepository;
+    private final SystemRoleRepository systemRoleRepository;
+
     @Override
     public UserDto apply(SystemUserModel systemUserModel) {
         Integer institutionId = systemUserModel.getInstitutionId();
@@ -26,6 +30,9 @@ public class UserDtoMapper implements Function<SystemUserModel, UserDto> {
             }
         }
 
+        SystemRoleModel role = systemRoleRepository.findFirstByRoleCode(systemUserModel.getRoleCode())
+                .orElseThrow(() -> new IllegalStateException("Role not found for code: " + systemUserModel.getRoleCode()));
+
         return new UserDto(
                 systemUserModel.getId(),
                 name,
@@ -33,6 +40,7 @@ public class UserDtoMapper implements Function<SystemUserModel, UserDto> {
                 systemUserModel.getLastName(),
                 systemUserModel.getEmail(),
                 systemUserModel.getRoleCode(),
+                role.getRoleDomain().name(),
                 systemUserModel.getCreatedAt(),
                 systemUserModel.getLastLoggedInAt(),
                 systemUserModel.getIsActive(),

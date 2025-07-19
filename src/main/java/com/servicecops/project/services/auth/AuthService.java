@@ -62,7 +62,11 @@ public class AuthService extends BaseWebActionsService {
         UserDto profile = userDtoMapper.apply(userDetails);
 
         //For consistency with other user querying calls
-        List<Map<String, Object>> permission = systemRolePermissionRepository.findPermissionsByRoleCode(userDetails.getRoleCode());
+        List<String> permission = systemRolePermissionRepository.findPermissionsByRoleCode(userDetails.getRoleCode())
+                .stream()
+                .map(p -> (String) p.get("permission_code"))
+                .toList();
+
         Map<String, Object> response = new HashMap<>();
         response.put("accessToken", accessToken); // this is the jwt token the user can user from now on.
         response.put("refreshToken", refreshToken); // this is the jwt token the user can user from now on.

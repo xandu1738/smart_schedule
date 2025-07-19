@@ -1,9 +1,7 @@
 package com.servicecops.project.services;
 
-import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.*;
-import com.servicecops.project.models.jpahelpers.enums.EmployeeStatus;
 import com.servicecops.project.models.jpahelpers.enums.OffRequestStatus;
 import com.servicecops.project.models.jpahelpers.enums.ShiftSwapStatus;
 import com.servicecops.project.repositories.*;
@@ -11,6 +9,7 @@ import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
 import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -20,6 +19,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
+@Slf4j
 public class ShiftManagementService extends BaseWebActionsService {
     private final ShiftAssignmentRepository shiftAssignmentRepository;
     private final ShiftSwapRepository shiftSwapRepository;
@@ -206,7 +206,7 @@ public class ShiftManagementService extends BaseWebActionsService {
             res.setReturnObject(swapRequests);
             return res;
         } catch (AuthorizationRequiredException e) {
-            throw new RuntimeException(e.getMessage());
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 
@@ -472,63 +472,58 @@ public class ShiftManagementService extends BaseWebActionsService {
             throw new IllegalArgumentException("No shifts found for the specified department");
         }
 
-        if (!Objects.equals(department.getInstitutionId(), authenticatedUser.getInstitutionId())) {
+        if (!Objects.equals(department.getInstitutionId(), authenticatedUser.getInstitutionId().longValue())) {
             throw new IllegalArgumentException("You are not authorized to view shifts for this department");
         }
 
         List<Employee> employees = employeeRepository.findAllByDepartmentAndArchived(department.getId(), false);
         //split employees into n groups where n=number of shifts
-        List<JSONObject> shiftAssignments = shifts.stream().map(shift -> {
-            JSONObject o = JSON.parseObject(JSON.toJSONString(shift));
-            Map<Boolean, List<Employee>> collected = employees.stream()
-                    .filter(employee -> employee.getStatus().equals(EmployeeStatus.AVAILABLE.name()))
-//                    .filter(employee -> employee.getId() % shifts.size() == shift.getId() % shifts.size())
-                    .collect(Collectors.partitioningBy(employee -> employee.getId() % shifts.size() == shift.getId() % shifts.size()));
+//        List<JSONObject> shiftAssignments = shifts.stream().map(shift -> {
+//            JSONObject o = JSON.parseObject(JSON.toJSONString(shift));
+//            Map<Boolean, List<Employee>> collected = employees.stream()
+//                    .filter(employee -> employee.getStatus().equals(EmployeeStatus.AVAILABLE.name()))
+////                    .filter(employee -> employee.getId() % shifts.size() == shift.getId() % shifts.size())
+//                    .collect(Collectors.partitioningBy(employee -> employee.getId() % shifts.size() == shift.getId() % shifts.size()));
+//
+//            return o;
+//        }).toList();
+        Map<String, ArrayList<Object>> sims = assignApplesWithLimits(employees, shifts);
+        OperationReturnObject op = new OperationReturnObject();
+        op.setCodeAndMessageAndReturnObject(200, "Shift simulation completed successfully", sims);
 
-            return o;
-        }).toList();
-
-        return null;
+        return op;
     }
 
-    public static Map<String, List<String>> assignApplesWithLimits(
-            List<String> apples,
-            List<String> baskets,
-            Map<String, Integer> basketLimits) {
+    public Map<String, ArrayList<Object>> assignApplesWithLimits(List<Employee> employees, List<Shift> shifts) {
 
-        Map<String, List<String>> basketMap = baskets.stream()
-                .collect(Collectors.toMap(
-                        b -> b,
-                        b -> new ArrayList<>(),
-                        (a, b) -> b,
-                        LinkedHashMap::new
-                ));
+        var shiftsMap = shifts.stream()
+                .collect(Collectors.toMap(Shift::getName, b -> new ArrayList<>(), (a, b) -> b, LinkedHashMap::new));
 
-        Iterator<String> basketCycle = Stream.generate(() -> baskets)
+        Iterator<Shift> shiftCycle = Stream.generate(() -> shifts)
                 .flatMap(List::stream)
                 .iterator();
 
-        for (String apple : apples) {
+        for (Employee employee : employees) {
             boolean assigned = false;
 
-            // Try assigning the apple to the next available basket
-            Set<String> tried = new HashSet<>();
-            while (!assigned && tried.size() < baskets.size()) {
-                String candidate = basketCycle.next();
+            // Try assigning the employee to the next available shift
+            Set<Shift> tried = new HashSet<>();
+            while (!assigned && tried.size() < shifts.size()) {
+                var candidate = shiftCycle.next();
                 tried.add(candidate);
 
-                List<String> applesInBasket = basketMap.get(candidate);
-                if (applesInBasket.size() < basketLimits.getOrDefault(candidate, Integer.MAX_VALUE)) {
-                    applesInBasket.add(apple);
+                var applesInBasket = shiftsMap.get(candidate.getName());
+                if (applesInBasket.size() < candidate.getMaxPeople()) {
+                    applesInBasket.add(employee);
                     assigned = true;
                 }
             }
 
             if (!assigned) {
-                System.out.println("Could not assign " + apple + ": all baskets full");
+                log.error("Could not assign {}: all baskets full", employee.getName());
             }
         }
 
-        return basketMap;
+        return shiftsMap;
     }
 }

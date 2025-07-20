@@ -11,29 +11,41 @@ import { loginSuccess } from "../../helpers/redux/slices/authSlice";
 import { authApi } from "../../helpers/redux/slices/extendedApis/authApi";
 import { APP_CONFIG } from "../../config/app.config";
 import Button from "../../components/Button";
+import Spinner from "../../components/Spinner";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setErrorMessage("");
 
-    authApi.login(formData).then((res) => {
-        dispatch(loginSuccess({
-            ...res?.data?.returnObject
-        }))
-        navigate(`/${APP_ROUTE.DASHBOARD}`)
-    }).catch((err) => {
-        setErrorMessage(err?.message)
-    })
+    authApi
+      .login(formData)
+      .then((res) => {
+        dispatch(
+          loginSuccess({
+            ...res?.data?.returnObject,
+          })
+        );
+        navigate(`/${APP_ROUTE.DASHBOARD}`);
+      })
+      .catch((err) => {
+        setErrorMessage(err?.message);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   const handleInputChange = (e) => {
@@ -52,7 +64,9 @@ export default function SignIn() {
               <Calendar className="w-7 h-7 text-white" />
             </div>
           </div>
-          <div className="text-2xl font-bold leading-none tracking-tight">Welcome back</div>
+          <div className="text-2xl font-bold leading-none tracking-tight">
+            Welcome back
+          </div>
           <div className="text-sm text-muted-foreground">
             Sign in to your {APP_CONFIG.TITLE} account
           </div>
@@ -60,7 +74,9 @@ export default function SignIn() {
         <div className="p-6 pt-0">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="flex justify-start">Email</label>
+              <label htmlFor="email" className="flex justify-start">
+                Email
+              </label>
               <input
                 id="email"
                 name="email"
@@ -73,7 +89,9 @@ export default function SignIn() {
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="flex justify-start">Password</label>
+              <label htmlFor="password" className="flex justify-start">
+                Password
+              </label>
               <div className="relative">
                 <input
                   id="password"
@@ -90,7 +108,11 @@ export default function SignIn() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
               {errorMessage && <p className="text-red-500">{errorMessage}</p>}
@@ -103,7 +125,13 @@ export default function SignIn() {
                 Forgot password?
               </Link>
             </div>
-            <Button  type={"submit"} buttonName={"Sign In"} onClick={() => {}} className={"w-full"} />
+            <Button
+              type={"submit"}
+              buttonName={isLoading ? <Spinner /> : "Sign In"}
+              onClick={() => {}}
+              className={"w-full"}
+              disabled={isLoading}
+            />
           </form>
           <div className="mt-6 text-center text-sm">
             <span className="text-gray-600">Don't have an account? </span>

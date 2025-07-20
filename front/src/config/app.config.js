@@ -27,4 +27,22 @@ export const SERVICES = {
             GET_SINGLE: "getSingle"
         }
     },
+    SHIFT: {
+        name: "Shift",
+        ACTION: {
+            GET_ALL: "shifts",
+            CREATE_SHIFT: "createShift",
+            SHIFT_DETAILS: "shiftDetails",
+        }
+    },
+    EMPLOYEE: {
+        name: "Employee",
+        ACTION: {
+            ADD_EMPLOYEE: "save",
+            GET_ALL: "getEmployees",
+            EDIT_EMPLOYEE: "edit",
+            DELETE_EMPLOYEE: "delete",
+            GET_SINGLE_EMPLOYEE: "getEmployee",
+        }
+    }
 }

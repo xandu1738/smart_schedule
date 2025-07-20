@@ -2,20 +2,13 @@ import { useFormik } from "formik";
 import FloatLabelInput from "../../components/FloatLabelInput";
 import FloatLabelSelect from "../../components/FloatLabelSelect";
 import Button from "../../components/Button";
+import Spinner from "../../components/Spinner";
 import React from "react";
 import { X } from "lucide-react";
+import { useCreateShiftMutation } from "../../helpers/redux/slices/extendedApis/shiftApi";
 
 const AddShift = ({ setShowDialog, departmentId, setRefetch }) => {
-  // Mock save function - replace with actual API mutation when available
-  const saveShift = async (data) => {
-    console.log("Saving shift:", data);
-    // Simulate API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ success: true });
-      }, 1000);
-    });
-  };
+  const [createShift, { isLoading }] = useCreateShiftMutation();
 
   const formik = useFormik({
     initialValues: {
@@ -27,18 +20,16 @@ const AddShift = ({ setShowDialog, departmentId, setRefetch }) => {
       max_people: "",
     },
     onSubmit: (values) => {
-      saveShift(values)
+      createShift(values)
         .then((res) => {
-          console.log("Shift added successfully:", res);
+          console.log("Shift created successfully:", res);
         })
         .catch((err) => {
-          console.error("Error adding shift:", err);
+          console.error("Error creating shift:", err);
         })
         .finally(() => {
           setShowDialog(false);
-          if (setRefetch) {
-            setRefetch((prev) => prev + 1);
-          }
+          setRefetch((prev) => prev + 1);
         });
     },
   });
@@ -110,7 +101,8 @@ const AddShift = ({ setShowDialog, departmentId, setRefetch }) => {
                 type={"submit"}
                 onClick={() => {}}
                 className={"w-full mt-4"}
-                buttonName={"Create Shift"}
+                buttonName={isLoading ? <Spinner /> : "Create Shift"}
+                disabled={isLoading}
               />
             </div>
           </form>

@@ -2,20 +2,21 @@ import { useFormik } from "formik";
 import React from "react";
 import { X } from "lucide-react";
 import Button from "../../components/Button";
+import Spinner from "../../components/Spinner";
 import FloatLabelTextarea from "../../components/FloatLabelTextarea";
 import FloatLabelInput from "../../components/FloatLabelInput";
 
 const EditInstitutionDialog = ({ setShowDialog, setRefetch }) => {
-    // const [showDialog, onClose] = React.useState(false);
+  // const [showDialog, onClose] = React.useState(false);
 
-    const formik = useFormik({
+  const formik = useFormik({
     initialValues: {
-        name: "",
-        description: "",
-        ownerName: "",
-        location: "",
-        regNo: "",
-        yearEstablished: ""
+      name: "",
+      description: "",
+      ownerName: "",
+      location: "",
+      regNo: "",
+      yearEstablished: "",
     },
     onSubmit: (values) => {
       // Handle form submission
@@ -91,7 +92,12 @@ const EditInstitutionDialog = ({ setShowDialog, setRefetch }) => {
                 onChange={formik.handleChange}
               />
             </div>
-            <Button type={"submit"} onClick={() => {}} className={"w-full mt-4"} buttonName={"Edit"} />
+            <Button
+              type={"submit"}
+              onClick={() => {}}
+              className={"w-full mt-4"}
+              buttonName={"Edit"}
+            />
           </form>
         </div>
       </div>

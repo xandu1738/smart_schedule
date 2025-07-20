@@ -3,21 +3,16 @@ import AddButton from "../../components/AddButton";
 import DepartmentCard from "../../components/DepartmentCard";
 import AddDepartment from "./AddDepartment";
 import EditDepartment from "./EditDepartment";
-import {
-  useGetAllDepartmentsQuery,
-} from "../../helpers/redux/slices/extendedApis/departmentsApi";
+import { useGetAllDepartmentsQuery } from "../../helpers/redux/slices/extendedApis/departmentsApi";
 import Spinner from "../../components/Spinner";
 import { selectDomain } from "../../helpers/redux/slices/authSlice";
 import { useSelector } from "react-redux";
 
 const Departments = () => {
   const [showDialog, setShowDialog] = React.useState(false);
-  const [editMode, setEditMode] = React.useState(false);
   const [refetch, setRefetch] = React.useState(0);
 
   const { data, isLoading } = useGetAllDepartmentsQuery({});
-
-  console.log(data?.data);
 
   if (isLoading) {
     return (
@@ -47,28 +42,21 @@ const Departments = () => {
         <section className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {data?.data?.map((department, i) => (
             <DepartmentCard
+              key={department.id}
               departmentId={department.id}
-              department={department.name}
+              departmentName={department.name}
               institutionId={department.institutionId}
-              onEdit={() => setEditMode(true)}
               description={department.description}
               employeeCount={department.noOfEmployees}
               managerName={department.managerName}
+              department={department}
+              setRefetch={setRefetch}
             />
           ))}
         </section>
       </div>
       {showDialog && (
-        <AddDepartment
-          setShowDialog={setShowDialog}
-          setRefetch={setRefetch}
-        />
-      )}
-      {editMode && (
-        <EditDepartment
-          setShowDialog={setEditMode}
-          setRefetch={setRefetch}
-        />
+        <AddDepartment setShowDialog={setShowDialog} setRefetch={setRefetch} />
       )}
     </>
   );

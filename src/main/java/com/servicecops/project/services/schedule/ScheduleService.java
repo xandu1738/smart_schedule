@@ -1,12 +1,14 @@
 package com.servicecops.project.services.schedule;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.servicecops.project.models.database.Department;
 import com.servicecops.project.models.database.Employee;
 import com.servicecops.project.models.database.Schedule;
 import com.servicecops.project.models.database.ScheduleRecord;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.repositories.*;
 import com.servicecops.project.services.base.BaseWebActionsService;
+import com.servicecops.project.services.schedule.Dtos.ScheduleDto;
 import com.servicecops.project.utils.OperationReturnObject;
 import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import jakarta.transaction.Transactional;
@@ -205,13 +207,17 @@ public class ScheduleService extends BaseWebActionsService {
     Integer scheduleId = data.getInteger(Params.SCHEDULE_ID.getLabel());
 
 
-    Schedule schedule = scheduleRepository.findById(scheduleId).orElse(null);
-    if (schedule == null) {
+    Schedule fetchedSchedule = scheduleRepository.findById(scheduleId).orElse(null);
+    if (fetchedSchedule == null) {
       throw new IllegalArgumentException("Schedule not found with ID: " + scheduleId);
     }
 
+
+    Department department = departmentRepository.findById(fetchedSchedule.getDepartmentId().longValue()).orElse(null);
+
+    ScheduleDto response = new ScheduleDto().fromScheduleAndDepartment(fetchedSchedule, department);
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200, "schedule return successfully: ", schedule);
+    res.setCodeAndMessageAndReturnObject(200, "schedule return successfully: ", response);
     return res;
 
   }

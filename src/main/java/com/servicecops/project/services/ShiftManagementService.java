@@ -487,14 +487,14 @@ public class ShiftManagementService extends BaseWebActionsService {
 //
 //            return o;
 //        }).toList();
-        Map<String, ArrayList<Object>> sims = assignApplesWithLimits(employees, shifts);
+        Map<String, ArrayList<Object>> sims = assignEmployeesToShifts(employees, shifts);
         OperationReturnObject op = new OperationReturnObject();
         op.setCodeAndMessageAndReturnObject(200, "Shift simulation completed successfully", sims);
 
         return op;
     }
 
-    public Map<String, ArrayList<Object>> assignApplesWithLimits(List<Employee> employees, List<Shift> shifts) {
+    public Map<String, ArrayList<Object>> assignEmployeesToShifts(List<Employee> employees, List<Shift> shifts) {
 
         var shiftsMap = shifts.stream()
                 .collect(Collectors.toMap(Shift::getName, b -> new ArrayList<>(), (a, b) -> b, LinkedHashMap::new));

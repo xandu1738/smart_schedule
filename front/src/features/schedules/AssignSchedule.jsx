@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router"
+import { useNavigate, useParams } from "react-router"
 import Button from "../../components/Button"
 import LucideIcon from "../../components/LucideIcon"
 import { useGetAllAccountsQuery } from "../../helpers/redux/slices/extendedApis/accountsApi"
@@ -6,14 +6,27 @@ import { useState } from "react"
 import { Badge } from "primereact/badge"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Avatar } from "primereact/avatar"
-import { getInitials } from "../../helpers/utils"
+import { formatDate, getInitials } from "../../helpers/utils"
+import { useGetSingleScheduleQuery } from "../../helpers/redux/slices/extendedApis/scheduleApi"
+import { useGetEmployeesQuery } from "../../helpers/redux/slices/extendedApis/employeesApi"
+import Spinner from "../../components/Spinner"
 
 const AssignSchedule = () => {
     const navigate = useNavigate()
     const [search, setSearch] = useState("")
     const [shiftData, setShiftData] = useState({})
-    const { data: { data: accounts } = { data: [] }, isLoading, error } = useGetAllAccountsQuery()
-    console.log(accounts)
+    // const { data: { data: accounts } = { data: [] } } = useGetAllAccountsQuery()
+    const params = useParams()
+
+    const {data: scheduleInfo, isLoading: scheduleLoading} = useGetSingleScheduleQuery({
+        scheduleId: params?.id
+    })
+
+    const {data: accounts, isLoading: employeesLoading} = useGetEmployeesQuery({
+        department: scheduleInfo?.data?.departmentId
+    }, {
+        skip: !scheduleInfo || !scheduleInfo.data
+    })
 
     const shifts = [
         {
@@ -67,6 +80,12 @@ const AssignSchedule = () => {
         console.log(dragged)
     }
 
+    if (scheduleLoading || employeesLoading) {
+        return (<div className="flex items-center justify-center h-screen">
+            <Spinner />
+        </div>)
+    }
+
     return (
         <div className="m-8 flex flex-col gap-4">
             <section className="flex flex-row items-center justify-between">
@@ -79,14 +98,13 @@ const AssignSchedule = () => {
                     Back
                 </button>
                 <div className="flex flex-1 flex-col gap-0 items-start justify-start left-0 w-full">
-                    <h1 className="font-bold text-3xl text-center w-full">Assign employees</h1>
+                    <h1 className="font-bold text-3xl text-center w-full">Assign employees - {scheduleInfo?.data?.name}</h1>
                     <p className="text-sm text-gray-500 pt-2 text-center w-full">
-                        Some schedule - Marketing
+                        {formatDate(scheduleInfo?.data?.startDate)} - {formatDate(scheduleInfo?.data?.endDate)}
                     </p>
                 </div>
                 <Button icon={"CheckCheck"} className={"rounded-sm"} buttonName={"Generate schedule"} />
             </section>
-            {/* shifts give the cols, shifts are dynamic */}
             <section>
                 <div className="flex gap-4 items-center justify-center border-b border-gray-200 rounded-sm p-0 px-4">
                     <LucideIcon
@@ -122,7 +140,7 @@ const AssignSchedule = () => {
                                     className={`flex flex-col gap-2 min-h-[400px] space-y-2 p-2 rounded-lg transition-colors ${snapshot.isDraggingOver ? 'bg-blue-50' : 'bg-gray-50'
                                         }`}
                                 >
-                                    {accounts.map((account, index) => (
+                                    {accounts?.data?.map((account, index) => (
                                         <Draggable key={account.id} draggableId={`${account.id}`} index={index}>
                                             {(provided, snapshot) => (
                                                 <div

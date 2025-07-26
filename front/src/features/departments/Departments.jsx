@@ -1,15 +1,31 @@
 import React from "react";
-import { Outlet } from "react-router";
 import AddButton from "../../components/AddButton";
 import DepartmentCard from "../../components/DepartmentCard";
 import AddDepartment from "./AddDepartment";
 import EditDepartment from "./EditDepartment";
+import {
+  useGetAllDepartmentsQuery,
+} from "../../helpers/redux/slices/extendedApis/departmentsApi";
+import Spinner from "../../components/Spinner";
+import { selectDomain } from "../../helpers/redux/slices/authSlice";
+import { useSelector } from "react-redux";
 
 const Departments = () => {
   const [showDialog, setShowDialog] = React.useState(false);
   const [editMode, setEditMode] = React.useState(false);
   const [refetch, setRefetch] = React.useState(0);
-  const [departments, setDepartments] = React.useState([]);
+
+  const { data, isLoading } = useGetAllDepartmentsQuery({});
+
+  console.log(data?.data);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Spinner />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -29,24 +45,31 @@ const Departments = () => {
           </div>
         </section>
         <section className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {departments.map((department) => (
+          {data?.data?.map((department, i) => (
             <DepartmentCard
-              key={department.id}
+              departmentId={department.id}
               department={department.name}
-              onClick={() => setEditMode(true)}
+              institutionId={department.institutionId}
+              onEdit={() => setEditMode(true)}
               description={department.description}
-              employeeCount={department.employeeCount}
+              employeeCount={department.noOfEmployees}
               managerName={department.managerName}
             />
           ))}
         </section>
       </div>
       {showDialog && (
-        <AddDepartment setShowDialog={setShowDialog} setRefetch={setRefetch} />
+        <AddDepartment
+          setShowDialog={setShowDialog}
+          setRefetch={setRefetch}
+        />
       )}
-	  {editMode && (
-		<EditDepartment setShowDialog={setEditMode} setRefetch={setRefetch} />
-	  )}
+      {editMode && (
+        <EditDepartment
+          setShowDialog={setEditMode}
+          setRefetch={setRefetch}
+        />
+      )}
     </>
   );
 };

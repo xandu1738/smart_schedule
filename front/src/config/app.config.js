@@ -16,5 +16,39 @@ export const SERVICES = {
         ACTION: {
             GET_ALL: "getAll"
         }
+    },
+    DEPARTMENT: {
+        name: "Department",
+        ACTION: {
+            GET_ALL: "getAll",
+            SAVE: "save",
+            DELETE: "delete",
+            EDIT: "edit",
+            GET_SINGLE: "getSingle"
+        }
+    },
+
+    SCHEDULE: {
+        name: "Schedule",
+        ACTION: {
+            SAVE: "save",
+            GET_SINGLE: "getSingleSchedule"
+        }
+    },
+
+    EMPLOYEE: {
+        name: "Employee",
+        ACTION: {
+            GET_EMPLOYEES: "getEmployees"
+        }
     }
 }
+
+// {
+//     "SERVICE": "Employee",
+//     "ACTION": "getEmployees",
+//     "data": {
+//         "department": 1
+//     }
+
+// }

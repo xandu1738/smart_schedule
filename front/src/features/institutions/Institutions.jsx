@@ -5,26 +5,19 @@ import Table from "../../components/Table";
 import { useGetAllInstitutionsQuery } from "../../helpers/redux/slices/extendedApis/institutionsApi";
 import { formatDate, formatText } from "../../helpers/utils";
 import { getActiveBadge, getPlainBadge } from "../../components/Badge";
-
-// {
-//     "id": 1,
-//     "name": "ROTARY LIMITED",
-//     "code": "ROTARY_LIMITED",
-//     "description": "digitaliizing commence",
-//     "ownerName": "paul peter",
-//     "location": "mukono",
-//     "regNo": "994353",
-//     "yearEstablished": "2025",
-//     "institutionType": "formal",
-//     "createdAt": "2025-07-12T14:31:45.971040Z",
-//     "createdBy": 1,
-//     "active": true
-// }
+import Spinner from "../../components/Spinner";
 
 const data = (props) => {
     const [showDialog, setShowDialog] = React.useState(false);
     const { data, isLoading, error } = useGetAllInstitutionsQuery()
 
+    if(isLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <Spinner />
+            </div>
+        );
+    }
     return (
         <>
             <div className="m-8 flex flex-col gap-4">

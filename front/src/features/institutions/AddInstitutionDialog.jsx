@@ -6,7 +6,6 @@ import FloatLabelTextarea from "../../components/FloatLabelTextarea";
 import FloatLabelInput from "../../components/FloatLabelInput";
 
 const AddInstitutionDialog = ({ setShowDialog, setRefetch }) => {
-    // const [showDialog, onClose] = React.useState(false);
 
     const formik = useFormik({
     initialValues: {

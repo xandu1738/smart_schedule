@@ -1,10 +1,6 @@
 import { useState } from "react";
-// import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
-// import { Label } from "@/components/ui/label";
-// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Eye, EyeOff } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { APP_ROUTE } from "../../config/route.config";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../../helpers/redux/slices/authSlice";
@@ -25,21 +21,18 @@ export default function SignIn() {
     const dispatch = useDispatch()
     const navigate = useNavigate()
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        console.log("Sign in attempted with:", formData);
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-        authApi.login(formData).then((res) => {
-            console.log("Login response:", res?.data)
-            dispatch(loginSuccess({
-                ...res?.data?.returnObject
-            }))
-
-            navigate(location?.state?.from || `/${APP_ROUTE.DASHBOARD}`)
-        }).catch((err) => {
-            setErrorMessage(err?.message)
-        })
-    };
+    authApi.login(formData).then((res) => {
+        dispatch(loginSuccess({
+            ...res?.data?.returnObject
+        }))
+        navigate(location?.state?.from ?? `/${APP_ROUTE.DASHBOARD}`)
+    }).catch((err) => {
+        setErrorMessage(err?.message)
+    })
+  };
 
     const handleInputChange = (e) => {
         setFormData({

@@ -3,22 +3,39 @@ import { useNavigate } from "react-router";
 import { useState } from "react";
 import Button from "../../components/Button";
 import { APP_ROUTE, buildRoute } from "../../config/route.config";
+import { useGetAllDepartmentsQuery } from "../../helpers/redux/slices/extendedApis/departmentsApi";
+import { useSaveScheduleMutation } from "../../helpers/redux/slices/extendedApis/scheduleApi";
+import Spinner from "../../components/Spinner";
 
 const CreateSchedule = () => {
     const navigate = useNavigate()
     const [scheduleData, setScheduleData] = useState({
         name: "",
-        department: null,
-        startDate: null,
-        endDate: null,
+        departmentId: null,
+        startTime: null,
+        endTime: null,
         description: "",
     })
 
-    const departments = []
+    const { data: departments, isLoading } = useGetAllDepartmentsQuery({});
+    const [saveSchedule, { isLoading: isCreating }] = useSaveScheduleMutation()
 
-    const handleNext = () => {
-        console.log(scheduleData)
-        navigate(`/${buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.SCHEDULES, APP_ROUTE.GENERATE_SCHEDULE, "assign/12")}`)
+    const handleNext = async () => {
+        try {
+            const response = await saveSchedule(scheduleData)
+            if (response?.error) {
+                throw new Error(response?.error?.message)
+            }
+            navigate(`/${buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.SCHEDULES, APP_ROUTE.GENERATE_SCHEDULE, "assign", response?.data?.data?.id)}`)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    if (isLoading || isCreating) {
+        return (<div className="flex items-center justify-center h-screen">
+            <Spinner />
+        </div>)
     }
 
     return (
@@ -48,35 +65,35 @@ const CreateSchedule = () => {
                         <select
                             id="department"
                             placeholder="Select department"
-                            value={scheduleData.department}
-                            onChange={(e) => setScheduleData({ ...scheduleData, department: e.target.value })}
+                            value={scheduleData.departmentId}
+                            onChange={(e) => setScheduleData({ ...scheduleData, departmentId: e.target.value })}
                             required
                         >
                             <option value="">Select department</option>
-                            {departments.map((dept) => (
-                                <option key={dept} value={dept}>{dept}</option>
+                            {departments?.data?.map((dept) => (
+                                <option key={dept.id} value={dept.id}>{dept.name}</option>
                             ))}
                         </select>
                     </div>
                     <div className="flex gap-4">
                         <div className="flex-1 flex flex-col space-y-1.5">
-                            <label className="text-left text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="startDate">Start Date</label>
+                            <label className="text-left text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="startTime">Start Time</label>
                             <input
-                                id="startDate"
+                                id="startTime"
                                 type="date"
-                                value={scheduleData.startDate}
-                                onChange={(e) => setScheduleData({ ...scheduleData, startDate: e.target.value })}
+                                value={scheduleData.startTime}
+                                onChange={(e) => setScheduleData({ ...scheduleData, startTime: e.target.value })}
                                 required
                             />
 
                         </div>
                         <div className="flex-1 flex flex-col space-y-1.5">
-                            <label className="text-left text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="endDate">End Date</label>
+                            <label className="text-left text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="endTime">End Time</label>
                             <input
-                                id="endDate"
+                                id="endTime"
                                 type="date"
-                                value={scheduleData.endDate}
-                                onChange={(e) => setScheduleData({ ...scheduleData, endDate: e.target.value })}
+                                value={scheduleData.endTime}
+                                onChange={(e) => setScheduleData({ ...scheduleData, endTime: e.target.value })}
                                 required
                             />
                         </div>
@@ -86,7 +103,7 @@ const CreateSchedule = () => {
                 <div className="flex justify-end space-x-3 pt-4">
                     <Button
                         onClick={handleNext}
-                        disabled={true}
+                        disabled={isLoading || isCreating}
                         className="rounded-sm"
                         buttonName="Next"
                         type="button"

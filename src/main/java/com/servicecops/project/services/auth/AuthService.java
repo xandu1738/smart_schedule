@@ -15,6 +15,7 @@ import com.servicecops.project.services.base.BaseWebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
 import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,6 +27,7 @@ import java.util.*;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class AuthService extends BaseWebActionsService {
     private final AuthenticationManager authenticationManager;
     private final ApplicationConf userDetailService;
@@ -63,7 +65,7 @@ public class AuthService extends BaseWebActionsService {
 
         UserDto profile = userDtoMapper.apply(userDetails);
 
-        //For consistency with other user querying calls
+        //For consistency with other user-querying calls
         List<String> permission = systemRolePermissionRepository.findPermissionsByRoleCode(userDetails.getRoleCode())
                 .stream()
                 .map(p -> (String) p.get("permission_code"))
@@ -78,6 +80,35 @@ public class AuthService extends BaseWebActionsService {
         res.setReturnObject(response);
 
         return res;
+    }
+
+    private OperationReturnObject refreshToken(JSONObject request) throws AuthorizationRequiredException {
+        requiresAuth();
+        requires(request,"data");
+
+        JSONObject data = request.getJSONObject("data");
+        requires(data,"refreshToken");
+
+        OperationReturnObject returnObject = new OperationReturnObject();
+        try {
+            String refreshToken = data.getString("refreshToken");
+            returnObject.setReturnCode(200);
+            returnObject.setReturnMessage("Token successfully Refreshed.");
+            String tokenType = jwtUtility.extractTokenType(refreshToken);
+            log.info(tokenType);
+            if (!Objects.equals(tokenType, "REFRESH"))
+                throw new IllegalArgumentException("Refresh Token Required. You have provided an access token.");
+
+            if (jwtUtility.isTokenValid(refreshToken, getContextUserDetails())) {
+                String token = jwtUtility.generateAccessToken(getContextUserDetails(),"ACCESS");
+                returnObject.setReturnObject(token);
+            }
+            return returnObject;
+        } catch (Exception e) {
+            e.printStackTrace();
+            returnObject.setReturnCodeAndReturnMessage(500, e.getMessage());
+            return returnObject;
+        }
     }
 
     private OperationReturnObject signUp(JSONObject request) throws AuthorizationRequiredException {
@@ -220,6 +251,7 @@ public class AuthService extends BaseWebActionsService {
             case "register" -> signUp(request);
             case "usersList" -> usersList(request);
             case "profile" -> usersProfile(request);
+            case "refresh" -> refreshToken(request);
             case "signUpEmployee" -> signUpEmployee(request);
             default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
         };

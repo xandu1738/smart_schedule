@@ -41,6 +41,8 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     private DepartmentRepository departmentRepository;
     @Autowired
     private EmployeeRepository employeeRepository;
+    @Autowired
+    private ScheduleRecordRepository scheduleRecordRepository;
 
 
     public OperationReturnObject process(String action, JSONObject payload) throws AuthorizationRequiredException {
@@ -330,8 +332,8 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
                 .orElseThrow(() -> new IllegalStateException("Employee does not exist"));
     }
 
-    public List<ScheduleRecord> getEmployeeScheduleRecords(Long employeeId, Long scheduleId) {
-        return Collections.EMPTY_LIST;
+    public List<ScheduleRecord> getEmployeeScheduleRecords(Integer employeeId, Integer scheduleId) {
+        return scheduleRecordRepository.findAllByEmployeeIdAndScheduleId(employeeId,scheduleId);
     }
 
 }

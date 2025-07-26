@@ -1,10 +1,7 @@
 package com.servicecops.project.services.schedule;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.servicecops.project.models.database.Department;
-import com.servicecops.project.models.database.Employee;
-import com.servicecops.project.models.database.Schedule;
-import com.servicecops.project.models.database.ScheduleRecord;
+import com.servicecops.project.models.database.*;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.repositories.*;
 import com.servicecops.project.services.base.BaseWebActionsService;
@@ -36,6 +33,7 @@ public class ScheduleService extends BaseWebActionsService {
 
   private final ScheduleRepository scheduleRepository;
   private final ScheduleRecordRepository scheduleRecordRepository;
+  private final ShiftRepository shiftRepository;
   private final DepartmentRepository departmentRepository;
   private final InstitutionRepository institutionRepository;
   private final EmployeeRepository employeeRepository;
@@ -120,6 +118,12 @@ public class ScheduleService extends BaseWebActionsService {
     departmentRepository.findById(departmentId.longValue())
       .orElseThrow(() -> new IllegalArgumentException("Department not found with id: " + departmentId));
 
+    List<Shift> shiftArray = shiftRepository.findAllByDepartmentId(departmentId);
+
+    if (shiftArray.size() <= 1) {
+      throw new IllegalArgumentException("No shift records found for department ID: " + departmentId);
+    }
+
     LocalDate startDateRequest = parseLocalDate(data.getString(Params.START_TIME.getLabel()));
     LocalDate endDateRequest = parseLocalDate(data.getString(Params.END_TIME.getLabel()));
 
@@ -193,7 +197,8 @@ public class ScheduleService extends BaseWebActionsService {
     Optional<List<Schedule>> institutionSchedules = scheduleRepository.findAllByInstitutionIdAndDepartmentId(institutionId,departmentId);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200, "returned successful ", institutionSchedules);
+    List<ScheduleDto> returnSchedules = ScheduleDto.fromSchedules(institutionSchedules.get());
+    res.setCodeAndMessageAndReturnObject(200, "returned successful ", returnSchedules);
     return res;
 
   }
@@ -203,6 +208,7 @@ public class ScheduleService extends BaseWebActionsService {
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
     requires(data, Params.SCHEDULE_ID.getLabel());
     Integer scheduleId = data.getInteger(Params.SCHEDULE_ID.getLabel());
+    Department fetchedDepartment = null;
 
 
     Schedule fetchedSchedule = scheduleRepository.findById(scheduleId).orElse(null);
@@ -211,9 +217,13 @@ public class ScheduleService extends BaseWebActionsService {
     }
 
 
-    Department department = departmentRepository.findById(fetchedSchedule.getDepartmentId().longValue()).orElse(null);
+    Optional<Department> departmentOptional = departmentRepository.findById(fetchedSchedule.getDepartmentId().longValue());
 
-    ScheduleDto response = new ScheduleDto().fromScheduleAndDepartment(fetchedSchedule, department);
+    if (departmentOptional.isEmpty()) {
+      fetchedDepartment = departmentOptional.get();
+    }
+
+    ScheduleDto response = new ScheduleDto().fromScheduleAndDepartment(fetchedSchedule, fetchedDepartment);
     OperationReturnObject res = new OperationReturnObject();
     res.setCodeAndMessageAndReturnObject(200, "schedule return successfully: ", response);
     return res;

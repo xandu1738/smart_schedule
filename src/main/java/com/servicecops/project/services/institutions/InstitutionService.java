@@ -112,7 +112,6 @@ public class InstitutionService extends BaseWebActionsService {
 
     return res;
   }
-
   public OperationReturnObject getAll(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
 
@@ -173,7 +172,6 @@ public class InstitutionService extends BaseWebActionsService {
 
     return res;
   }
-
   public OperationReturnObject findById(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.ID.getLabel()); // Ensure ID is provided
@@ -187,7 +185,6 @@ public class InstitutionService extends BaseWebActionsService {
 
     return res;
   }
-
   public OperationReturnObject edit(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());
@@ -279,6 +276,7 @@ public class InstitutionService extends BaseWebActionsService {
 
     return res;
   }
+
   public OperationReturnObject delete(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());

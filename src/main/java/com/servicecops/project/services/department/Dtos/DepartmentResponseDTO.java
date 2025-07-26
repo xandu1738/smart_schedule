@@ -1,8 +1,16 @@
 package com.servicecops.project.services.department.Dtos;
 
-import lombok.Data;
+import com.servicecops.project.models.database.Department;
+import lombok.*;
+
 import java.time.Instant;
 
+
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DepartmentResponseDTO {
 
   private Integer id;
@@ -14,91 +22,8 @@ public class DepartmentResponseDTO {
   private Instant createdAt;
   private boolean active;
 
-  // Constructors
-  public DepartmentResponseDTO() {}
-
-  public DepartmentResponseDTO(
-    Integer id,
-    String name,
-    Long institutionId,
-    String description,
-    Integer noOfEmployees,
-    String managerName,
-    Instant createdAt,
-    boolean active
-  ) {
-    this.id = id;
-    this.name = name;
-    this.institutionId = institutionId;
-    this.description = description;
-    this.noOfEmployees = noOfEmployees;
-    this.managerName = managerName;
-    this.createdAt = createdAt;
-    this.active = active;
+  public static DepartmentResponseDTO fromDepartment(Department department) {
+    return new DepartmentResponseDTO(department.getId(), department.getName(), department.getInstitutionId(),department.getDescription(),department.getNoOfEmployees(), department.getManagerName(), department.getCreatedAt(), department.isActive());
   }
 
-  // Getters and Setters (can use Lombok @Getter/@Setter here too)
-  public Integer getId() {
-    return id;
-  }
-
-  public void setId(Integer id) {
-    this.id = id;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public Long getInstitutionId() {
-    return institutionId;
-  }
-
-  public void setInstitutionId(Long institutionId) {
-    this.institutionId = institutionId;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public Integer getNoOfEmployees() {
-    return noOfEmployees;
-  }
-
-  public void setNoOfEmployees(Integer noOfEmployees) {
-    this.noOfEmployees = noOfEmployees;
-  }
-
-  public String getManagerName() {
-    return managerName;
-  }
-
-  public void setManagerName(String managerName) {
-    this.managerName = managerName;
-  }
-
-  public Instant getCreatedAt() {
-    return createdAt;
-  }
-
-  public void setCreatedAt(Instant createdAt) {
-    this.createdAt = createdAt;
-  }
-
-  public boolean isActive() {
-    return active;
-  }
-
-  public void setActive(boolean active) {
-    this.active = active;
-  }
 }

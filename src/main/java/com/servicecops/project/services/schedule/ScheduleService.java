@@ -219,7 +219,7 @@ public class ScheduleService extends BaseWebActionsService {
 
     Optional<Department> departmentOptional = departmentRepository.findById(fetchedSchedule.getDepartmentId().longValue());
 
-    if (departmentOptional.isEmpty()) {
+    if (!departmentOptional.isEmpty()) {
       fetchedDepartment = departmentOptional.get();
     }
 

@@ -153,4 +153,8 @@ public class JwtUtility {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+    public String extractTokenType(String token) {
+        return extractClaim(token, claims -> (String) claims.get("tokenType"));
+    }
 }

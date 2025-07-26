@@ -14,4 +14,5 @@ public interface EmployeeRepository extends JetRepository<Employee, Long> {
 
     List<Employee> findAllByDepartmentAndArchivedTrue(Integer department);
 
+  List<Employee> findAllByDepartmentAndArchivedFalse(Integer department);
 }

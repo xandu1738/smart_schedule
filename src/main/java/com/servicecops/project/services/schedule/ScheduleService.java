@@ -115,7 +115,7 @@ public class ScheduleService extends BaseWebActionsService {
     institutionRepository.findById(institutionId.longValue())
       .orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + finalInstitutionId));
 
-    departmentRepository.findById(departmentId.longValue())
+    Department department = departmentRepository.findById(departmentId.longValue())
       .orElseThrow(() -> new IllegalArgumentException("Department not found with id: " + departmentId));
 
     List<Shift> shiftArray = shiftRepository.findAllByDepartmentId(departmentId);
@@ -136,7 +136,7 @@ public class ScheduleService extends BaseWebActionsService {
 
     Integer createdScheduleId = newSchedule.getId();
 
-    List<Employee> employees = employeeRepository.findAllByDepartmentAndArchivedTrue(departmentId);
+    List<Employee> employees = employeeRepository.findAllByDepartmentAndArchivedFalse(department.getId().intValue());
 
     if (employees.isEmpty()) {
       OperationReturnObject res = new OperationReturnObject();
@@ -194,7 +194,10 @@ public class ScheduleService extends BaseWebActionsService {
     }
     Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
 
+
     Optional<List<Schedule>> institutionSchedules = scheduleRepository.findAllByInstitutionIdAndDepartmentId(institutionId,departmentId);
+
+
 
     OperationReturnObject res = new OperationReturnObject();
     List<ScheduleDto> returnSchedules = ScheduleDto.fromSchedules(institutionSchedules.get());

@@ -41,12 +41,14 @@ const Departments = () => {
         </section>
         <section className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {data?.data?.map((department, i) => (
+          {data?.data?.map((department, i) => (
             <DepartmentCard
               key={department.id}
               departmentId={department.id}
               departmentName={department.name}
               institutionId={department.institutionId}
               description={department.description}
+              employeeCount={department.noOfEmployees}
               employeeCount={department.noOfEmployees}
               managerName={department.managerName}
               department={department}

@@ -16,8 +16,23 @@ const AddDepartment = ({ setShowDialog, setRefetch }) => {
       description: "",
       managerName: "",
       noOfEmployees: "",
+      name: "",
+      description: "",
+      managerName: "",
+      noOfEmployees: "",
     },
     onSubmit: (values) => {
+      saveDepartment(values)
+        .then((res) => {
+          console.log("Department added successfully:", res);
+        })
+        .catch((err) => {
+          console.error("Error adding department:", err);
+        })
+        .finally(() => {
+          setShowDialog(false);
+          setRefetch((prev) => prev + 1);
+        });
       saveDepartment(values)
         .then((res) => {
           console.log("Department added successfully:", res);
@@ -32,6 +47,7 @@ const AddDepartment = ({ setShowDialog, setRefetch }) => {
     },
   });
 
+  return (
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -89,6 +105,8 @@ const AddDepartment = ({ setShowDialog, setRefetch }) => {
       </div>
     </>
   );
+  );
 };
 
 export default AddDepartment;
+

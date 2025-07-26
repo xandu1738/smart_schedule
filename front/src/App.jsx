@@ -15,6 +15,7 @@ import { Route, Routes, Navigate } from "react-router";
 import { AxiosConfiguration } from "./helpers/axios/axios_helper.js";
 import SignIn from "./features/auth/SignIn.jsx";
 import Accounts from "./features/accounts/Accounts.jsx";
+import DepartmentDetails from "./features/departments/DepartmentDetails.jsx";
 import GenerateSchedule from "./features/schedules/GenerateSchedule.jsx";
 import CreateSchedule from "./features/schedules/CreateSchedule.jsx";
 import AssignSchedule from "./features/schedules/AssignSchedule.jsx";

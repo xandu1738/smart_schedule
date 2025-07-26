@@ -2,13 +2,16 @@ import React from "react";
 import { NavLink, Outlet, useLocation } from "react-router";
 import { APP_CONFIG } from "../../config/app.config";
 import { APP_MENUS } from "../../config/menus.config";
-import { trimSlashes } from "../../helpers/utils";
+import { formatText, trimSlashes } from "../../helpers/utils";
 import LucideIcon from "../LucideIcon";
 import { useDispatch } from "react-redux";
 import { logout } from "../../helpers/redux/slices/authSlice";
+import useCheckUser from "../../hooks/useCheckUser";
+import { DOMAIN } from "../../config/permission.config";
 
 const DashboardLayout = () => {
 	const { pathname } = useLocation();
+    const { isUserDomain, user } = useCheckUser()
     const dispatch = useDispatch()
 
     const handleLogout = () => {
@@ -17,10 +20,14 @@ const DashboardLayout = () => {
 
 	return (
 		// <div className="min-h-screen bg-gray-50">
-		<div className="h-screen w-screen flex overflow-hidden">
+        <>
+
+        <div className="h-screen w-screen overflow-hidden">
+        {isUserDomain(DOMAIN.INSTITUTION) && <p className="bg-blue-700 text-white font-bold p-1 text-center text-sm">{formatText(user?.institution)}</p>}
+		<div className="flex-1 flex">
 			{/* <div className="fixed inset-0 bg-black/50 z-40 lg:hidden"></div> */}
 			{/* <div className="fixed left-0 top-0 z-50 h-screen bg-white border-r border-gray-200 transition-all duration-300 w-64"> */}
-			<div className="floating relative h-screen bg-white border-r border-gray-200 transition-all duration-300 w-64">
+			<div className={`floating relative bg-white border-r border-gray-200 transition-all duration-300 w-64 ${isUserDomain(DOMAIN.INSTITUTION) ? "h-[calc(100vh-40px)]" : "h-screen"}`}>
 				<div className="flex items-center justify-between p-4 border-b border-gray-200">
 					<div className="w-full flex items-center space-x-2">
 						<div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center pointer">
@@ -148,10 +155,12 @@ const DashboardLayout = () => {
 				</svg>
 			</button> */}
 			{/* <main className="lg:ml-64 min-h-screen"> */}
-			<main className="flex-1 bg-slate-50">
+			<main className="flex-1 bg-slate-50 h-screen overflow-y-auto">
 				<Outlet />
 			</main>
 		</div>
+        </div>
+        </>
 	);
 };
 

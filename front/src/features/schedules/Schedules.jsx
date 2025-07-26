@@ -2,8 +2,11 @@ import React from "react";
 import AddButton from "../../components/AddButton";
 import ScheduleDashCard from "../../components/ScheduleDashCard";
 import { Calendar, Clock, Users } from "lucide-react";
+import { useNavigate } from "react-router";
+import { APP_ROUTE, buildRoute } from "../../config/route.config";
 
 const Schedules = () => {
+    const navigate = useNavigate()
   return (
     <div className="m-8">
     <section className="flex flex-row items-center justify-between">
@@ -14,7 +17,7 @@ const Schedules = () => {
         </p>
         </div>
         <div>
-        <AddButton onClick={() => {}} buttonName={"Generate Schedule"} />
+        <AddButton onClick={() => navigate(`/${buildRoute(APP_ROUTE.DASHBOARD, APP_ROUTE.SCHEDULES, APP_ROUTE.GENERATE_SCHEDULE)}`)} buttonName={"Generate Schedule"} />
         </div>
     </section>
     <section className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

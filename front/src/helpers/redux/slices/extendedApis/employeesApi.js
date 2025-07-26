@@ -2,10 +2,10 @@ import { SERVICES } from "../../../../config/app.config"
 import { baseApiSlice } from "../baseApiSlice"
 
 const enhancedApi = baseApiSlice.enhanceEndpoints({
-    addTagTypes: [SERVICES.INSTITUTION.name],
+    addTagTypes: [SERVICES.EMPLOYEE.name],
 })
 
-const institutionsApi = enhancedApi.injectEndpoints({
+const employeesApi = enhancedApi.injectEndpoints({
     endpoints: (builder) => ({
         getAllEmployees: builder.query({
             query: () => ({
@@ -58,5 +58,5 @@ const institutionsApi = enhancedApi.injectEndpoints({
     }),
 })
 
-export const { useGetAllEmployeesQuery, useAddEmployeeMutation, useEditEmployeeMutation, useDeleteEmployeeMutation, useGetSingleEmployeeQuery, useGetEmployeesByDepartmentQuery } = institutionsApi
+export const { useGetAllEmployeesQuery, useAddEmployeeMutation, useEditEmployeeMutation, useDeleteEmployeeMutation, useGetSingleEmployeeQuery, useGetEmployeesByDepartmentQuery } = employeesApi
 

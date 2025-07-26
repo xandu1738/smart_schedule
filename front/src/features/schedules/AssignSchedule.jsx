@@ -8,7 +8,7 @@ import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Avatar } from "primereact/avatar"
 import { formatDate, getInitials } from "../../helpers/utils"
 import { useGetSingleScheduleQuery } from "../../helpers/redux/slices/extendedApis/scheduleApi"
-import { useGetEmployeesQuery } from "../../helpers/redux/slices/extendedApis/employeesApi"
+import { useGetAllEmployeesQuery } from "../../helpers/redux/slices/extendedApis/employeesApi"
 import Spinner from "../../components/Spinner"
 
 const AssignSchedule = () => {
@@ -22,7 +22,7 @@ const AssignSchedule = () => {
         scheduleId: params?.id
     })
 
-    const {data: accounts, isLoading: employeesLoading} = useGetEmployeesQuery({
+    const {data: accounts, isLoading: employeesLoading} = useGetAllEmployeesQuery({
         department: scheduleInfo?.data?.departmentId
     }, {
         skip: !scheduleInfo || !scheduleInfo.data

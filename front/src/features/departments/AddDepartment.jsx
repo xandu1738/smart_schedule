@@ -16,10 +16,6 @@ const AddDepartment = ({ setShowDialog, setRefetch }) => {
       description: "",
       managerName: "",
       noOfEmployees: "",
-      name: "",
-      description: "",
-      managerName: "",
-      noOfEmployees: "",
     },
     onSubmit: (values) => {
       saveDepartment(values)
@@ -47,7 +43,6 @@ const AddDepartment = ({ setShowDialog, setRefetch }) => {
     },
   });
 
-  return (
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -104,7 +99,6 @@ const AddDepartment = ({ setShowDialog, setRefetch }) => {
         </div>
       </div>
     </>
-  );
   );
 };
 

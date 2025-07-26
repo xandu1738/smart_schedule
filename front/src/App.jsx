@@ -19,7 +19,6 @@ import DepartmentDetails from "./features/departments/DepartmentDetails.jsx";
 import GenerateSchedule from "./features/schedules/GenerateSchedule.jsx";
 import CreateSchedule from "./features/schedules/CreateSchedule.jsx";
 import AssignSchedule from "./features/schedules/AssignSchedule.jsx";
-import DepartmentDetails from "./features/departments/DepartmentDetails.jsx";
 
 const App = () => {
     // intiialize services

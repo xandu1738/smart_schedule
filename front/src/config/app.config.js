@@ -44,5 +44,15 @@ export const SERVICES = {
             DELETE_EMPLOYEE: "delete",
             GET_SINGLE_EMPLOYEE: "getEmployee",
         }
+    },
+    SCHEDULE: {
+        name: "Schedule",
+        ACTION: {
+            GET_ALL: "getAll",
+            SAVE: "save",
+            DELETE: "delete",
+            EDIT: "edit",
+            GET_SINGLE: "getSingleSchedule"
+        }
     }
 }

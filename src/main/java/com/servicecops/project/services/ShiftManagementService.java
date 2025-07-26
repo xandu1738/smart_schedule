@@ -88,7 +88,7 @@ public class ShiftManagementService extends BaseWebActionsService {
 
         requires(data, "schedule_id", "shifts");
 
-        Long scheduleId = data.getLong("schedule_id");
+        Integer scheduleId = data.getInteger("schedule_id");
         if (scheduleId == null) {
             throw new IllegalArgumentException("Schedule ID is required");
         }
@@ -118,7 +118,7 @@ public class ShiftManagementService extends BaseWebActionsService {
             employees.forEach(emp -> {
                 try {
                     Employee employee = getEmployee(emp);
-                    List<ScheduleRecord> scheduleRecords = getEmployeeScheduleRecords(employee.getId().longValue(), scheduleId);
+                    List<ScheduleRecord> scheduleRecords = getEmployeeScheduleRecords(employee.getId(), scheduleId);
                     if (scheduleRecords.isEmpty()) {
                         throw new IllegalArgumentException("No schedule records found for employee ID: " + emp);
                     }

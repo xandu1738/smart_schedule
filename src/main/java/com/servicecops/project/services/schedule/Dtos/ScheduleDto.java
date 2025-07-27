@@ -26,7 +26,7 @@ public class ScheduleDto {
   private Boolean is_active; // Add the is_active field for the Schedule
 
   // This constructor is designed to include the summary AND the Schedule's is_active status
-  public static ScheduleDto fromScheduleAndDepartmentAndSummary(Schedule schedule, Department department, JSONObject summary) {
+  public static ScheduleDto fromScheduleAndDepartmentWithSummary(Schedule schedule, Department department, JSONObject summary) {
     return new ScheduleDto(
       schedule.getId(),
       schedule.getStartDate(),

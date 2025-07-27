@@ -1,8 +1,8 @@
 package com.servicecops.project.services.schedule;
 
-import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.jmsoft.Moonlight.Core.Log;
 import com.servicecops.project.models.database.*;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.repositories.*;
@@ -13,6 +13,7 @@ import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import jakarta.transaction.Transactional;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,7 @@ import static java.time.LocalTime.now;
 
 @RequiredArgsConstructor
 @Service
+@Log4j2
 public class ScheduleService extends BaseWebActionsService {
 
   private final ScheduleRepository scheduleRepository;
@@ -334,22 +336,29 @@ public class ScheduleService extends BaseWebActionsService {
                 List<Long> employeesInShift = scheduleRecordRepository
                   .findEmployeesInDistinctShiftsForSingleSchedule(schedule.getId(), shiftIdAsInt);
 
-                // Ensure employeesInShift is not null to avoid NullPointerException if repository returns null
+                Integer employeeCount = 0;
+
+
+                // set to 0 if not null
                 if (employeesInShift == null) {
                   employeesInShift = new ArrayList<>();
+                  employeeCount = employeesInShift.size();
                 }
 
+
                 JSONObject shiftSummary = new JSONObject();
-                shiftSummary.put("shift", shift);
-                shiftSummary.put("employees", employeesInShift);
-                shiftSummary.put("is_active", isShiftActive); // Add is_active for the shift
+                shiftSummary.put("shift_details", shift);
+                shiftSummary.put("employee_count_in_shift", employeeCount);
+                shiftSummary.put("is_active", isShiftActive);
 
                 shiftArray.add(shiftSummary);
+
+
               } else {
-                System.err.println("Warning: Shift with ID " + shiftId + " found in schedule records but not in shift repository for schedule " + schedule.getId());
+                log.warn("Warning: Shift with ID " + shiftId + " found in schedule records but not in shift repository for schedule " + schedule.getId());
               }
             } else {
-              System.err.println("Warning: Null or invalid shift ID (" + shiftId + ") found in schedule records for schedule " + schedule.getId() + ". Skipping.");
+              log.warn("Warning: Null or invalid shift ID (" + shiftId + ") found in schedule records for schedule " + schedule.getId() + ". Skipping.");
             }
           }
         }
@@ -357,11 +366,9 @@ public class ScheduleService extends BaseWebActionsService {
 
         // --- Employee Related Information ---
         List<Long> employeesInSchedule = scheduleRecordRepository.findDistinctEmployeeIdsForSingleSchedule(schedule.getId());
-        scheduleSummary.put("employeesInSchedule", employeesInSchedule.size());
+        scheduleSummary.put("employee_count_in_schedule", employeesInSchedule.size());
 
-
-        // Pass schedule and department, the ScheduleDto will call schedule.getIs_active()
-        return ScheduleDto.fromScheduleAndDepartmentAndSummary(schedule, department, scheduleSummary);
+        return ScheduleDto.fromScheduleAndDepartmentWithSummary(schedule, department, scheduleSummary);
       })
       .collect(Collectors.toList());
 

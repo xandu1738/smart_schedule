@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Timestamp;
-import java.util.List;
+import java.time.LocalDateTime; // Use java.time for modern date/time API
+import java.time.ZoneOffset; // To handle UTC offset if needed for comparison
+import java.time.ZoneId; // For specific time zones
 
 @Getter
 @Setter
@@ -30,7 +32,15 @@ public class Schedule {
   private Integer institutionId;
 
   @Transient
-  private List<Shift> shiftList;
+  private Boolean is_active;
+  public Boolean getIs_active() {
+
+    LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
+    LocalDateTime scheduleStartUtc = this.startDate.toLocalDateTime();
+    LocalDateTime scheduleEndUtc = this.endDate.toLocalDateTime();
 
 
+    this.is_active = !nowUtc.isBefore(scheduleStartUtc) && !nowUtc.isAfter(scheduleEndUtc);
+    return this.is_active;
+  }
 }

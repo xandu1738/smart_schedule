@@ -24,6 +24,36 @@ public interface ScheduleRecordRepository extends JpaRepository<ScheduleRecord, 
   List<Long> findDistinctEmployeeIdsForSingleSchedule(@Param("scheduleId") Integer scheduleId);
 
   @Query(value = """
+    SELECT DISTINCT (sr.employee_id)
+    FROM schedule_record sr
+    WHERE sr.schedule_id = :scheduleId AND sr.shift_id = :shift_id AND sr.employee_id IS NOT NULL
+    GROUP BY sr.employee_id
+""", nativeQuery = true)
+  List<Long> findEmployeesInDistinctShiftsForSingleSchedule(
+    @Param("scheduleId") Integer scheduleId,
+    @Param("shift_id") Integer shiftId
+  );
+
+
+  @Query(value = """
+    SELECT DISTINCT (sr.shift_id)
+    FROM schedule_record sr
+    WHERE sr.schedule_id = :scheduleId AND sr.shift_id IS NOT NULL
+    GROUP BY sr.shift_id
+""", nativeQuery = true)
+  List<Long> findDistinctShifts(@Param("scheduleId") Integer scheduleId);
+
+
+//  43 employees
+//  3 shifts
+//  shift1 has 3 employees
+//  shift2 has 20 employees
+//  shift3 has 20 employees
+
+
+
+
+  @Query(value = """
     SELECT
         json_build_object(
             'employeeId', sr.employee_id,
@@ -38,4 +68,11 @@ public interface ScheduleRecordRepository extends JpaRepository<ScheduleRecord, 
         sr.employee_id
     """, nativeQuery = true)
   List<String> findEmployeeShiftSummariesByScheduleId(@Param("scheduleId") Integer scheduleId);
+
+
+
+
+
+
+
 }

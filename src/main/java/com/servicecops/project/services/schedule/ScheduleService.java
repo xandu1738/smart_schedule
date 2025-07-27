@@ -1,6 +1,7 @@
 package com.servicecops.project.services.schedule;
 
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.*;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
@@ -15,14 +16,12 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeParseException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -187,75 +186,260 @@ public class ScheduleService extends BaseWebActionsService {
 //
 //  }
 
+//  public OperationReturnObject getMySchedules(JSONObject request) throws AuthorizationRequiredException {
+//    requiresAuth();
+//    // Ensure DATA parameter exists and is a JSONObject
+//    requires(request, Params.DATA.getLabel());
+//    JSONObject data = request.getJSONObject(Params.DATA.getLabel());
+//
+//    Integer institutionId;
+//
+//    if (getUserDomain() == AppDomains.BACK_OFFICE) {
+//      // For BACK_OFFICE, both DEPARTMENT_ID and INSTITUTION_ID are required in data
+//      requires(data, Params.DEPARTMENT_ID.getLabel(), Params.INSTITUTION_ID.getLabel());
+//      institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
+//    } else if (getUserDomain() == AppDomains.INSTITUTION) {
+//      // For INSTITUTION, only DEPARTMENT_ID is required in data, institutionId is from authenticated user
+//      requires(data, Params.DEPARTMENT_ID.getLabel());
+//      institutionId = authenticatedUser().getInstitutionId();
+//    } else {
+//      // If the user domain is neither, institutionId cannot be determined.
+//      // Throwing an IllegalArgumentException is appropriate here.
+//      throw new IllegalArgumentException("Institution ID cannot be determined for the current user domain: " + getUserDomain());
+//    }
+//
+//    // Fetch schedules for the determined institutionId
+//    List<Schedule> institutionSchedules = scheduleRepository.findAllByInstitutionId(institutionId)
+//      .orElseGet(ArrayList::new);
+//
+//    if (institutionSchedules.isEmpty()) {
+//      OperationReturnObject res = new OperationReturnObject();
+//      res.setCodeAndMessageAndReturnObject(200, "No schedules found for institution ID: " + institutionId, new ArrayList<>());
+//      return res;
+//    }
+//
+//    // Process each schedule to create ScheduleDto objects
+//    List<ScheduleDto> scheduleDtos = institutionSchedules.stream()
+//      .map(schedule -> {
+//        JSONObject scheduleSummary = new JSONObject(); // Initialize scheduleSummary for each schedule
+//
+//        // Fetch department; throw if not found (data inconsistency)
+//        Department department = departmentRepository.findById(schedule.getDepartmentId().longValue())
+//          .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + schedule.getDepartmentId() + " for schedule ID: " + schedule.getId()));
+//
+//        // --- Shift Related Information ---
+//        // Assuming findDistinctShifts can return a List<Long> that might contain nulls.
+//        List<Long> shiftsInSchedule = scheduleRecordRepository.findDistinctShifts(schedule.getId());
+//        List<JSONObject> shiftSummaries = new ArrayList<>();
+//
+//        if (shiftsInSchedule != null && !shiftsInSchedule.isEmpty()) { // Ensure the list itself isn't null
+//          for (Long shiftId : shiftsInSchedule) {
+//            // **FIX: Explicitly check for null shiftId before processing**
+//            if (Objects.nonNull(shiftId)) { // Use Objects.nonNull for null-safe check
+//              Optional<Shift> shiftOptional = shiftRepository.findById(shiftId.intValue());
+//              if (shiftOptional.isPresent()) {
+//                JSONObject currentShiftSummary = new JSONObject();
+//                Shift shift = shiftOptional.get();
+//                List<Long> employeesInShift = scheduleRecordRepository.findEmployeesInDistinctShiftsForSingleSchedule(schedule.getId(), shiftId.intValue());
+//
+//                currentShiftSummary.put("shift", shift);
+//                currentShiftSummary.put("employees", employeesInShift);
+//                shiftSummaries.add(currentShiftSummary);
+//              } else {
+//                // Log or handle the case where a shiftId exists but the actual Shift object is not found.
+//                // This indicates a data inconsistency.
+//                System.err.println("Warning: Shift with ID " + shiftId + " found in schedule records but not in shift repository for schedule " + schedule.getId());
+//              }
+//            } else {
+//              // Log or handle the case where a null shiftId is found in schedule records.
+//              System.err.println("Warning: Null shift ID found in schedule records for schedule " + schedule.getId());
+//            }
+//          }
+//        }
+//        scheduleSummary.put("shifts", shiftSummaries);
+//
+//        // --- Employee Related Information ---
+//        List<Long> employeesInSchedule = scheduleRecordRepository.findDistinctEmployeeIdsForSingleSchedule(schedule.getId());
+//        scheduleSummary.put("employeesInSchedule", employeesInSchedule.size());
+//
+//        return ScheduleDto.fromScheduleAndDepartmentAndSummary(schedule, department, scheduleSummary);
+//      })
+//      .collect(Collectors.toList());
+//
+//    OperationReturnObject res = new OperationReturnObject();
+//    res.setCodeAndMessageAndReturnObject(200, "Schedules returned successfully", scheduleDtos);
+//    return res;
+//  }
+
+
+
+
   public OperationReturnObject getMySchedules(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
 
-    Integer institutionId = null;
+    Integer institutionId;
 
     if (getUserDomain() == AppDomains.BACK_OFFICE) {
       requires(data, Params.DEPARTMENT_ID.getLabel(), Params.INSTITUTION_ID.getLabel());
       institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
-    }
-
-    if (getUserDomain() == AppDomains.INSTITUTION) {
-      requires(data, Params.DEPARTMENT_ID.getLabel()); // DEPARTMENT_ID might not be strictly needed here if finding all schedules by institution
+    } else if (getUserDomain() == AppDomains.INSTITUTION) {
+      requires(data, Params.DEPARTMENT_ID.getLabel());
       institutionId = authenticatedUser().getInstitutionId();
+    } else {
+      throw new IllegalArgumentException("Institution ID cannot be determined for the current user domain: " + getUserDomain());
     }
 
-    if (institutionId == null) {
-      throw new IllegalArgumentException("Institution ID is null. Cannot fetch schedules.");
-    }
-
-    Optional<List<Schedule>> institutionSchedulesOptional = scheduleRepository.findAllByInstitutionId(institutionId);
-    List<Schedule> institutionSchedules = institutionSchedulesOptional.orElse(new ArrayList<>());
+    List<Schedule> institutionSchedules = scheduleRepository.findAllByInstitutionId(institutionId)
+      .orElseGet(ArrayList::new);
 
     if (institutionSchedules.isEmpty()) {
-
-      throw new AuthorizationRequiredException("No schedules found for institution ID: " + institutionId);
+      OperationReturnObject res = new OperationReturnObject();
+      res.setCodeAndMessageAndReturnObject(200, "No schedules found for institution ID: " + institutionId, new ArrayList<>());
+      return res;
     }
+
+    // Get current time in UTC once for efficiency
+    LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
 
     List<ScheduleDto> scheduleDtos = institutionSchedules.stream()
       .map(schedule -> {
-        Optional<Department> scheduleDepartment = departmentRepository.findById(schedule.getDepartmentId().longValue());
+        JSONObject scheduleSummary = new JSONObject();
+        JSONArray shiftArray = new JSONArray();
 
-        Department department = scheduleDepartment.orElseThrow(() ->
-          new IllegalArgumentException("Department not found with ID: " + schedule.getDepartmentId())
-        );
+        Department department = departmentRepository.findById(schedule.getDepartmentId().longValue())
+          .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + schedule.getDepartmentId() + " for schedule ID: " + schedule.getId()));
 
-        List<String> employeeShiftSummaryStrings = scheduleRecordRepository.findEmployeeShiftSummariesByScheduleId(schedule.getId());
-        List<Long> employeeIdsAssignedToShift = scheduleRecordRepository.findDistinctEmployeeIdsForSingleSchedule(schedule.getId());
+        // --- Shift Related Information ---
+        List<Long> shiftsInSchedule = scheduleRecordRepository.findDistinctShifts(schedule.getId());
 
+        if (shiftsInSchedule != null && !shiftsInSchedule.isEmpty()) {
+          for (Long shiftId : shiftsInSchedule) {
+            if (Objects.nonNull(shiftId) && shiftId > 0) { // Check for null and validity
+              int shiftIdAsInt = shiftId.intValue();
 
-        JSONObject summaryForAllEmployees = new JSONObject();
+              Optional<Shift> shiftOptional = shiftRepository.findById(shiftIdAsInt);
+              if (shiftOptional.isPresent()) {
+                Shift shift = shiftOptional.get();
 
-        if (employeeIdsAssignedToShift.size() < 1) {
+                // Calculate is_active for the individual shift
+                boolean isShiftActive = false;
+                if (shift.getStartTime() != null && shift.getEndTime() != null) {
+                  LocalDateTime shiftStartUtc = shift.getStartTime().toLocalDateTime();
+                  LocalDateTime shiftEndUtc = shift.getEndTime().toLocalDateTime();
+                  isShiftActive = !nowUtc.isBefore(shiftStartUtc) && !nowUtc.isAfter(shiftEndUtc);
+                }
 
-          summaryForAllEmployees.put("employeesInSchedule", 0);
+                List<Long> employeesInShift = scheduleRecordRepository
+                  .findEmployeesInDistinctShiftsForSingleSchedule(schedule.getId(), shiftIdAsInt);
 
-        } else {
-          summaryForAllEmployees.put("employeesInSchedule", employeeIdsAssignedToShift.size());
-        }
+                // Ensure employeesInShift is not null to avoid NullPointerException if repository returns null
+                if (employeesInShift == null) {
+                  employeesInShift = new ArrayList<>();
+                }
 
-        for (String summaryString : employeeShiftSummaryStrings) {
-          JSONObject employeeSummary = JSON.parseObject(summaryString);
-          if (employeeSummary.containsKey("employeeId")) {
-            Employee employee = employeeRepository.findById(employeeSummary.getLong("employeeId")).orElseThrow(() -> new IllegalArgumentException("Employee ID not found: " + employeeSummary.getLong("employeeId")));
+                JSONObject shiftSummary = new JSONObject();
+                shiftSummary.put("shift", shift);
+                shiftSummary.put("employees", employeesInShift);
+                shiftSummary.put("is_active", isShiftActive); // Add is_active for the shift
 
-            summaryForAllEmployees.put(employee.getName(), employeeSummary);
+                shiftArray.add(shiftSummary);
+              } else {
+                System.err.println("Warning: Shift with ID " + shiftId + " found in schedule records but not in shift repository for schedule " + schedule.getId());
+              }
+            } else {
+              System.err.println("Warning: Null or invalid shift ID (" + shiftId + ") found in schedule records for schedule " + schedule.getId() + ". Skipping.");
+            }
           }
         }
+        scheduleSummary.put("shifts", shiftArray);
 
-        return ScheduleDto.fromScheduleAndDepartmentAndSummary(schedule, department, summaryForAllEmployees);
+        // --- Employee Related Information ---
+        List<Long> employeesInSchedule = scheduleRecordRepository.findDistinctEmployeeIdsForSingleSchedule(schedule.getId());
+        scheduleSummary.put("employeesInSchedule", employeesInSchedule.size());
+
+
+        // Pass schedule and department, the ScheduleDto will call schedule.getIs_active()
+        return ScheduleDto.fromScheduleAndDepartmentAndSummary(schedule, department, scheduleSummary);
       })
       .collect(Collectors.toList());
-
 
     OperationReturnObject res = new OperationReturnObject();
     res.setCodeAndMessageAndReturnObject(200, "Schedules returned successfully", scheduleDtos);
     return res;
   }
+//  public OperationReturnObject getMySchedules(JSONObject request) throws AuthorizationRequiredException {
+//    requiresAuth();
+//    requires(request, Params.DATA.getLabel());
+//    JSONObject data = request.getJSONObject(Params.DATA.getLabel());
+//
+//    Integer institutionId = null;
+//
+//    if (getUserDomain() == AppDomains.BACK_OFFICE) {
+//      requires(data, Params.DEPARTMENT_ID.getLabel(), Params.INSTITUTION_ID.getLabel());
+//      institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
+//    }
+//
+//    if (getUserDomain() == AppDomains.INSTITUTION) {
+//      requires(data, Params.DEPARTMENT_ID.getLabel());
+//      institutionId = authenticatedUser().getInstitutionId();
+//    }
+//
+//    if (institutionId == null) {
+//      throw new IllegalArgumentException("Institution ID is null. Cannot fetch schedules.");
+//    }
+//
+//    Optional<List<Schedule>> institutionSchedulesOptional = scheduleRepository.findAllByInstitutionId(institutionId);
+//    List<Schedule> institutionSchedules = institutionSchedulesOptional.orElse(new ArrayList<>());
+//
+//    if (institutionSchedules.isEmpty()) {
+//
+//      throw new AuthorizationRequiredException("No schedules found for institution ID: " + institutionId);
+//    }
+//
+//    List<ScheduleDto> scheduleDtos = institutionSchedules.stream()
+//      .map(schedule -> {
+//        Optional<Department> scheduleDepartment = departmentRepository.findById(schedule.getDepartmentId().longValue());
+//
+//        Department department = scheduleDepartment.orElseThrow(() ->
+//          new IllegalArgumentException("Department not found with ID: " + schedule.getDepartmentId())
+//        );
+//
+//        List<String> employeeShiftSummaryStrings = scheduleRecordRepository.findEmployeeShiftSummariesByScheduleId(schedule.getId());
+//        List<Long> employeeIdsAssignedToShift = scheduleRecordRepository.findDistinctEmployeeIdsForSingleSchedule(schedule.getId());
+//
+//        // shift related information
+//
+//
+//        JSONObject summaryForAllEmployees = new JSONObject();
+//
+//        if (employeeIdsAssignedToShift.size() < 1) {
+//
+//          summaryForAllEmployees.put("employeesInSchedule", 0);
+//
+//        } else {
+//          summaryForAllEmployees.put("employeesInSchedule", employeeIdsAssignedToShift.size());
+//        }
+//
+//        for (String summaryString : employeeShiftSummaryStrings) {
+//          JSONObject employeeSummary = JSON.parseObject(summaryString);
+//          if (employeeSummary.containsKey("employeeId")) {
+//            Employee employee = employeeRepository.findById(employeeSummary.getLong("employeeId")).orElseThrow(() -> new IllegalArgumentException("Employee ID not found: " + employeeSummary.getLong("employeeId")));
+//
+//            summaryForAllEmployees.put(employee.getName(), employeeSummary);
+//          }
+//        }
+//
+//        return ScheduleDto.fromScheduleAndDepartmentAndSummary(schedule, department, summaryForAllEmployees);
+//      })
+//      .collect(Collectors.toList());
+//
+//
+//    OperationReturnObject res = new OperationReturnObject();
+//    res.setCodeAndMessageAndReturnObject(200, "Schedules returned successfully", scheduleDtos);
+//    return res;
+//  }
   public OperationReturnObject getSingleSchedule(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());

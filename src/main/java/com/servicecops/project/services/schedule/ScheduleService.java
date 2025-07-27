@@ -1,5 +1,6 @@
 package com.servicecops.project.services.schedule;
 
+import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.*;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
@@ -13,6 +14,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -22,6 +24,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 import static java.time.LocalTime.now;
@@ -37,7 +40,6 @@ public class ScheduleService extends BaseWebActionsService {
   private final DepartmentRepository departmentRepository;
   private final InstitutionRepository institutionRepository;
   private final EmployeeRepository employeeRepository;
-
 
 
   @RequiredArgsConstructor
@@ -71,13 +73,14 @@ public class ScheduleService extends BaseWebActionsService {
       case "getSingleSchedule" -> this.getSingleSchedule(request);
       case "edit" -> this.editSchedule(request);
       case "delete" -> this.delete(request);
+//      case "findDistinctEmployeeIdsForSchedule" -> this.findDistinctEmployeeIdsForSchedule(request);
+
 
 //      case "findByDepartmentIdAndInstitutionId" -> this.findByDepartmentIdAndInstitutionId(request);
 
       default -> throw new IllegalArgumentException("Action " + action + " not known in this context");
     };
   }
-
 
 
   private LocalDate parseLocalDate(String dateString) {
@@ -94,13 +97,13 @@ public class ScheduleService extends BaseWebActionsService {
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
     Integer institutionId = null;
 
-    if(getUserDomain() == AppDomains.BACK_OFFICE){
+    if (getUserDomain() == AppDomains.BACK_OFFICE) {
       requires(data, Params.INSTITUTION_ID.getLabel(), Params.DEPARTMENT_ID.getLabel(),
         Params.START_TIME.getLabel(), Params.END_TIME.getLabel());
       institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
     }
 
-    if(getUserDomain() == AppDomains.INSTITUTION){
+    if (getUserDomain() == AppDomains.INSTITUTION) {
       requires(data, Params.DEPARTMENT_ID.getLabel(),
         Params.START_TIME.getLabel(), Params.END_TIME.getLabel());
       institutionId = authenticatedUser().getInstitutionId();
@@ -171,6 +174,19 @@ public class ScheduleService extends BaseWebActionsService {
     return res;
   }
 
+//  public OperationReturnObject findDistinctEmployeeIdsForSchedule(JSONObject request) {
+//
+//    Integer scheduleId = request.getInteger(Params.SCHEDULE_ID.getLabel());
+//
+//    List<Long> employees = scheduleRecordRepository.findDistinctEmployeeIdsForSchedule(scheduleId);
+//
+//
+//    OperationReturnObject res = new OperationReturnObject();
+//    res.setCodeAndMessageAndReturnObject(200, "Schedule successfully created with ID: ", employees);
+//    return res;
+//
+//  }
+
   public OperationReturnObject getMySchedules(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());
@@ -178,32 +194,67 @@ public class ScheduleService extends BaseWebActionsService {
 
     Integer institutionId = null;
 
-    if(getUserDomain() == AppDomains.BACK_OFFICE){
-      requires(data, Params.DEPARTMENT_ID.getLabel(),
-       Params.INSTITUTION_ID.getLabel());
+    if (getUserDomain() == AppDomains.BACK_OFFICE) {
+      requires(data, Params.DEPARTMENT_ID.getLabel(), Params.INSTITUTION_ID.getLabel());
       institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
     }
 
-    if(getUserDomain() == AppDomains.INSTITUTION){
-      requires(data, Params.DEPARTMENT_ID.getLabel());
+    if (getUserDomain() == AppDomains.INSTITUTION) {
+      requires(data, Params.DEPARTMENT_ID.getLabel()); // DEPARTMENT_ID might not be strictly needed here if finding all schedules by institution
       institutionId = authenticatedUser().getInstitutionId();
     }
 
     if (institutionId == null) {
-      throw new IllegalArgumentException("Institution not found with id: " + institutionId);
+      throw new IllegalArgumentException("Institution ID is null. Cannot fetch schedules.");
     }
-    Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
+
+    Optional<List<Schedule>> institutionSchedulesOptional = scheduleRepository.findAllByInstitutionId(institutionId);
+    List<Schedule> institutionSchedules = institutionSchedulesOptional.orElse(new ArrayList<>());
+
+    if (institutionSchedules.isEmpty()) {
+
+      throw new AuthorizationRequiredException("No schedules found for institution ID: " + institutionId);
+    }
+
+    List<ScheduleDto> scheduleDtos = institutionSchedules.stream()
+      .map(schedule -> {
+        Optional<Department> scheduleDepartment = departmentRepository.findById(schedule.getDepartmentId().longValue());
+
+        Department department = scheduleDepartment.orElseThrow(() ->
+          new IllegalArgumentException("Department not found with ID: " + schedule.getDepartmentId())
+        );
+
+        List<String> employeeShiftSummaryStrings = scheduleRecordRepository.findEmployeeShiftSummariesByScheduleId(schedule.getId());
+        List<Long> employeeIdsAssignedToShift = scheduleRecordRepository.findDistinctEmployeeIdsForSingleSchedule(schedule.getId());
 
 
-    Optional<List<Schedule>> institutionSchedules = scheduleRepository.findAllByInstitutionIdAndDepartmentId(institutionId,departmentId);
+        JSONObject summaryForAllEmployees = new JSONObject();
 
+        if (employeeIdsAssignedToShift.size() < 1) {
+
+          summaryForAllEmployees.put("employeesInSchedule", 0);
+
+        } else {
+          summaryForAllEmployees.put("employeesInSchedule", employeeIdsAssignedToShift.size());
+        }
+
+        for (String summaryString : employeeShiftSummaryStrings) {
+          JSONObject employeeSummary = JSON.parseObject(summaryString);
+          if (employeeSummary.containsKey("employeeId")) {
+            Employee employee = employeeRepository.findById(employeeSummary.getLong("employeeId")).orElseThrow(() -> new IllegalArgumentException("Employee ID not found: " + employeeSummary.getLong("employeeId")));
+
+            summaryForAllEmployees.put(employee.getName(), employeeSummary);
+          }
+        }
+
+        return ScheduleDto.fromScheduleAndDepartmentAndSummary(schedule, department, summaryForAllEmployees);
+      })
+      .collect(Collectors.toList());
 
 
     OperationReturnObject res = new OperationReturnObject();
-    List<ScheduleDto> returnSchedules = ScheduleDto.fromSchedules(institutionSchedules.get());
-    res.setCodeAndMessageAndReturnObject(200, "returned successful ", returnSchedules);
+    res.setCodeAndMessageAndReturnObject(200, "Schedules returned successfully", scheduleDtos);
     return res;
-
   }
   public OperationReturnObject getSingleSchedule(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
@@ -241,13 +292,13 @@ public class ScheduleService extends BaseWebActionsService {
 
     Integer institutionId = null;
 
-    if(getUserDomain() == AppDomains.BACK_OFFICE){
+    if (getUserDomain() == AppDomains.BACK_OFFICE) {
       requires(data, Params.DEPARTMENT_ID.getLabel(),
         Params.INSTITUTION_ID.getLabel());
       institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
     }
 
-    if(getUserDomain() == AppDomains.INSTITUTION){
+    if (getUserDomain() == AppDomains.INSTITUTION) {
       requires(data, Params.DEPARTMENT_ID.getLabel());
       institutionId = authenticatedUser().getInstitutionId();
     }
@@ -257,7 +308,7 @@ public class ScheduleService extends BaseWebActionsService {
     }
     Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
 
-    Optional<List<Schedule>> institutionSchedules = scheduleRepository.findAllByInstitutionIdAndDepartmentId(institutionId,departmentId);
+    Optional<List<Schedule>> institutionSchedules = scheduleRepository.findAllByInstitutionIdAndDepartmentId(institutionId, departmentId);
 
     OperationReturnObject res = new OperationReturnObject();
     res.setCodeAndMessageAndReturnObject(200, "returned successful ", institutionSchedules);
@@ -272,18 +323,18 @@ public class ScheduleService extends BaseWebActionsService {
 
     requires(request, Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data,Params.SCHEDULE_ID.getLabel(), Params.DEPARTMENT_ID.getLabel(),
+    requires(data, Params.SCHEDULE_ID.getLabel(), Params.DEPARTMENT_ID.getLabel(),
       Params.START_TIME.getLabel(), Params.END_TIME.getLabel());
 
     Integer scheduleId = data.getInteger(Params.SCHEDULE_ID.getLabel());
     Integer institutionId = null;
 
-    if(getUserDomain() == AppDomains.BACK_OFFICE){
+    if (getUserDomain() == AppDomains.BACK_OFFICE) {
       requires(data, Params.INSTITUTION_ID.getLabel());
       institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
     }
 
-    if(getUserDomain() == AppDomains.INSTITUTION){
+    if (getUserDomain() == AppDomains.INSTITUTION) {
       institutionId = authenticatedUser().getInstitutionId();
     }
 
@@ -311,7 +362,6 @@ public class ScheduleService extends BaseWebActionsService {
     scheduleToUpdate.setEndDate(endTime);
 
 
-
     Schedule updatedSchedule = scheduleRepository.save(scheduleToUpdate);
 
 //  delete old schedule records
@@ -319,9 +369,9 @@ public class ScheduleService extends BaseWebActionsService {
     scheduleRecordRepository.flush();
 
 //    create new scheduleRecord
-    Integer updatedScheduleId =  updatedSchedule.getId();
+    Integer updatedScheduleId = updatedSchedule.getId();
 
-    List<Employee> employees = employeeRepository.findAllByDepartmentAndArchived(departmentId,false);
+    List<Employee> employees = employeeRepository.findAllByDepartmentAndArchived(departmentId, false);
 
     if (employees.isEmpty()) {
       OperationReturnObject res = new OperationReturnObject();
@@ -356,7 +406,7 @@ public class ScheduleService extends BaseWebActionsService {
     List<ScheduleRecord> savedScheduleRecords = scheduleRecordRepository.saveAll(createdScheduleRecords);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200, " successfully created new schedule records for: " + employees.size() + " employees",savedScheduleRecords);
+    res.setCodeAndMessageAndReturnObject(200, " successfully created new schedule records for: " + employees.size() + " employees", savedScheduleRecords);
     return res;
 
   }

@@ -10,6 +10,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Integer>  {
 
   Optional<Schedule> findById(int id);
   Optional<Schedule> findAllByDepartmentId(int id);
+  Optional<List<Schedule>> findAllByInstitutionId(Integer institutionId);
+
   Optional<List<Schedule>> findAllByInstitutionIdAndDepartmentId(int institutionId, int departmentId);
 
 }

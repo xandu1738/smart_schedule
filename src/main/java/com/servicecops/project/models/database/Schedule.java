@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 @Getter
 @Setter
@@ -29,7 +30,7 @@ public class Schedule {
   private Integer institutionId;
 
   @Transient
-  private Boolean isAssigned;
+  private List<Shift> shiftList;
 
 
 }

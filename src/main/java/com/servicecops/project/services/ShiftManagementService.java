@@ -2,6 +2,8 @@ package com.servicecops.project.services;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.*;
+import com.servicecops.project.models.dtos.ShiftDetailsDto;
+import com.servicecops.project.models.dtos.mapper.ShiftDetailsDtoMapper;
 import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.models.jpahelpers.enums.OffRequestStatus;
 import com.servicecops.project.models.jpahelpers.enums.ShiftSwapStatus;
@@ -28,8 +30,9 @@ public class ShiftManagementService extends BaseWebActionsService {
     private final TimeOffRepository timeOffRepository;
     private final ScheduleRecordRepository scheduleRecordRepository;
     private final EmployeeRepository employeeRepository;
+    private final ShiftDetailsDtoMapper shiftDetailsDtoMapper;
 
-    public ShiftManagementService(ShiftAssignmentRepository shiftAssignmentRepository, ShiftSwapRepository shiftSwapRepository, ShiftRepository shiftRepository, TimeOffRepository timeOffRepository, ScheduleRecordRepository scheduleRecordRepository, EmployeeRepository employeeRepository) {
+    public ShiftManagementService(ShiftAssignmentRepository shiftAssignmentRepository, ShiftSwapRepository shiftSwapRepository, ShiftRepository shiftRepository, TimeOffRepository timeOffRepository, ScheduleRecordRepository scheduleRecordRepository, EmployeeRepository employeeRepository, ShiftDetailsDtoMapper shiftDetailsDtoMapper) {
         super();
         this.shiftAssignmentRepository = shiftAssignmentRepository;
         this.shiftSwapRepository = shiftSwapRepository;
@@ -37,6 +40,7 @@ public class ShiftManagementService extends BaseWebActionsService {
         this.timeOffRepository = timeOffRepository;
         this.scheduleRecordRepository = scheduleRecordRepository;
         this.employeeRepository = employeeRepository;
+        this.shiftDetailsDtoMapper = shiftDetailsDtoMapper;
     }
 
     private OperationReturnObject createShift(JSONObject request) {
@@ -415,8 +419,9 @@ public class ShiftManagementService extends BaseWebActionsService {
         return returnObject;
     }
 
-    private OperationReturnObject getShiftDetails(JSONObject request) {
-        SystemUserModel authenticatedUser = authenticatedUser();
+    private OperationReturnObject getShiftDetails(JSONObject request) throws AuthorizationRequiredException {
+//        SystemUserModel authenticatedUser = authenticatedUser();
+        requiresAuth();
         JSONObject search = request.getJSONObject("search");
         if (search == null) {
             search = new JSONObject();
@@ -427,7 +432,7 @@ public class ShiftManagementService extends BaseWebActionsService {
             throw new IllegalArgumentException("Shift ID is required");
         }
 
-        Optional<Map<String, Object>> shiftDetails = shiftRepository.getShiftDetails(shiftId);
+        List<ShiftDetailsDto> shiftDetails = shiftRepository.getShiftDetails(shiftId).stream().map(shiftDetailsDtoMapper).toList();
 
         OperationReturnObject returnObject = new OperationReturnObject();
         returnObject.setReturnCodeAndReturnMessage(200, "Shift details fetched successfully");

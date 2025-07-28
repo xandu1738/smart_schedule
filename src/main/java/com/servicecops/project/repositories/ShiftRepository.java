@@ -45,10 +45,10 @@ public interface ShiftRepository extends JpaRepository<Shift, Integer> {
                  )
             SELECT
                 sd.*,
-                COALESCE(json_agg(srd.schedule_entry) FILTER (WHERE srd.schedule_entry IS NOT NULL), '[]') AS schedule_records
+                COALESCE(json_agg(srd.schedule_entry) FILTER (WHERE srd.schedule_entry IS NOT NULL)::json, '[]') AS schedule_records
             FROM shift_data sd
                      LEFT JOIN schedule_record_data srd ON sd.id = srd.shift_id
             GROUP BY sd.id, sd.department_name, sd.type, sd.name, sd.start_time, sd.end_time, sd.created_at, sd.created_by, sd.max_people
             """, nativeQuery = true)
-    Optional<Map<String, Object>> getShiftDetails(Long employee);
+    Optional<Map<String, Object>> getShiftDetails(Long shiftId);
 }

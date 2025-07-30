@@ -23,6 +23,7 @@
   <include file="/changes/Department_entity_update_14.sql" relativeToChangelogFile="true"/>
   <include file="/changes/allow_null_shift_Id_on_schedule_record_update_15.sql" relativeToChangelogFile="true"/>
   <include file="/changes/removing_range_on_scheduleRecord.sql" relativeToChangelogFile="true"/>
+<!--  <include file="/changes/adding_isActive_flag_to_schedule.sql" relativeToChangelogFile="true"/>-->
 
 
 </databaseChangeLog>

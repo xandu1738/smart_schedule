@@ -59,6 +59,7 @@ export const AxiosConfiguration = {
 			transformResponseError
 		);
 	},
+	
 };
 
 const transformResponse = (response) => {

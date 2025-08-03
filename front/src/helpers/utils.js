@@ -19,6 +19,18 @@ export function formatText(text) {
         .join(' ');
 }
 
+export const formatTime = (date) => {
+    if (!date || typeof date !== 'string') return '';
+
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '';
+
+    const hours = d.getHours();
+    const minutes = d.getMinutes();
+
+    return `${hours > 12 ? hours - 12 : hours}:${minutes < 10 ? '0' + minutes : minutes} ${hours > 12 ? 'PM' : 'AM'}`;
+}
+
 export const formatDate = (date) => {
     if (!date || typeof date !== 'string') return '';
   

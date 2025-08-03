@@ -4,32 +4,9 @@ import Table from "../../components/Table";
 import { useGetAllAccountsQuery } from "../../helpers/redux/slices/extendedApis/accountsApi";
 import { formatText } from "../../helpers/utils";
 
-
-{/* <Tag value="Primary"></Tag>
-<Tag severity="success" value="Success"></Tag>
-<Tag severity="info" value="Info"></Tag>
-<Tag severity="warning" value="Warning"></Tag>
-<Tag severity="danger" value="Danger"></Tag>
-<Tag severity="secondary" value="Secondary"></Tag>
-<Tag severity="contrast" value="Contrast"></Tag> */}
-
-
 const Accounts = () => {
     const { data: { data: accounts } = { data: [] }, isLoading, error } = useGetAllAccountsQuery()
 
-    console.log(accounts)
-    // {
-    //     "id": 2,
-    //     "institution": null,
-    //     "firstName": "Destiny",
-    //     "lastName": "Graham",
-    //     "email": "Lizzie.Maggio35@yahoo.com",
-    //     "roleCode": "SUPER_ADMIN",
-    //     "createdAt": "2025-07-12T07:23:29.202+00:00",
-    //     "lastLoggedInAt": "2025-07-12T09:58:51.037+00:00",
-    //     "isActive": true,
-    //     "username": "Lizzie.Maggio35@yahoo.com"
-    // }
     return (
         <div className="m-8 flex flex-col gap-4">
             <section className="flex flex-row items-center justify-between">

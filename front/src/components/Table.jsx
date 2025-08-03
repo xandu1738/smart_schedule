@@ -112,8 +112,8 @@ export default function Table({
                     value={data}
                     paginator={paginator}
                     rows={rows}
-                    stripedRows={true}
-                    showGridlines={true}
+                    // stripedRows={true}
+                    // showGridlines={true}
                     selection={selection}
                     onSelectionChange={onSelectionChange}
                     dataKey={dataKey}

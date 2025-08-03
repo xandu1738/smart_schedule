@@ -20,6 +20,10 @@ import GenerateSchedule from "./features/schedules/GenerateSchedule.jsx";
 import CreateSchedule from "./features/schedules/CreateSchedule.jsx";
 import AssignSchedule from "./features/schedules/AssignSchedule.jsx";
 
+// import "primereact/resources/themes/lara-light-cyan/theme.css";
+import "primereact/resources/themes/bootstrap4-light-blue/theme.css";
+
+
 const App = () => {
     // intiialize services
     AxiosConfiguration.initialize(store);

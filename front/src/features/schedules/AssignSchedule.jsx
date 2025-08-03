@@ -1,95 +1,112 @@
 import { useNavigate, useParams } from "react-router"
 import Button from "../../components/Button"
 import LucideIcon from "../../components/LucideIcon"
-import { useGetAllAccountsQuery } from "../../helpers/redux/slices/extendedApis/accountsApi"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Badge } from "primereact/badge"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { Avatar } from "primereact/avatar"
 import { formatDate, getInitials } from "../../helpers/utils"
 import { useGetSingleScheduleQuery } from "../../helpers/redux/slices/extendedApis/scheduleApi"
-import { useGetAllEmployeesQuery } from "../../helpers/redux/slices/extendedApis/employeesApi"
 import Spinner from "../../components/Spinner"
+import { useGetEmployeesByDepartmentQuery } from "../../helpers/redux/slices/extendedApis/employeesApi"
+import { useAssignToShiftMutation, useGetAllShiftsQuery } from "../../helpers/redux/slices/extendedApis/shiftApi"
+import { Tag } from "primereact/tag"
 
 const AssignSchedule = () => {
     const navigate = useNavigate()
     const [search, setSearch] = useState("")
     const [shiftData, setShiftData] = useState({})
-    // const { data: { data: accounts } = { data: [] } } = useGetAllAccountsQuery()
+
     const params = useParams()
 
-    const {data: scheduleInfo, isLoading: scheduleLoading} = useGetSingleScheduleQuery({
+    const { data: scheduleInfo, isLoading: scheduleLoading } = useGetSingleScheduleQuery({
         scheduleId: params?.id
     })
 
-    const {data: accounts, isLoading: employeesLoading} = useGetAllEmployeesQuery({
-        department: scheduleInfo?.data?.departmentId
-    }, {
+    const { data: accounts, isLoading: employeesLoading } = useGetEmployeesByDepartmentQuery(scheduleInfo?.data?.departmentId, {
         skip: !scheduleInfo || !scheduleInfo.data
     })
 
-    const shifts = [
-        {
-            id: 1,
-            name: "Shift 1",
-            requiredEmployees: 2,
-            assignments: []
-        },
-        {
-            id: 2,
-            name: "Shift 2",
-            requiredEmployees: 2,
-            assignments: []
-        },
-        {
-            id: 3,
-            name: "Shift 3",
-            requiredEmployees: 2,
-            assignments: []
-        },
-        {
-            id: 4,
-            name: "Shift 4",
-            requiredEmployees: 2,
-            assignments: []
-        },
-        {
-            id: 5,
-            name: "Shift 5",
-            requiredEmployees: 2,
-            assignments: []
-        }
-    ]
 
-    const handleDragEnd = (dragged) => {
-        // {
-        //     "draggableId": "1",
-        //     "type": "DEFAULT",
-        //     "source": {
-        //         "index": 0,
-        //         "droppableId": "unassigned"
-        //     },
-        //     "reason": "DROP",
-        //     "mode": "FLUID",
-        //     "destination": {
-        //         "droppableId": "1",
-        //         "index": 0
-        //     },
-        //     "combine": null
-        // }
-        console.log(dragged)
+    const { data: shifts, isLoading: shiftsLoading, error: shiftsError } = useGetAllShiftsQuery({ department_id: scheduleInfo?.data?.departmentId }, {
+        skip: !scheduleInfo || !scheduleInfo.data
+    });
+
+    const [assignToShift, { isLoading: assignToShiftLoading }] = useAssignToShiftMutation()
+
+    useEffect(() => {
+        if (shifts?.data && accounts?.data) {
+            const initialData = {
+                unassigned: [...accounts.data],
+            }
+
+            for (const shift of shifts.data) {
+                initialData[shift.id] = []
+            }
+
+            setShiftData(initialData)
+        }
+    }, [shifts?.data, accounts?.data])
+
+    const handleDragEnd = (result) => {
+        const { source, destination, draggableId } = result
+        if (!destination) return
+
+        if (source.droppableId === destination.droppableId) return
+
+        const sourceList = Array.from(shiftData[source.droppableId] || [])
+        const destList = Array.from(shiftData[destination.droppableId] || [])
+
+        // check if destination is not max
+        console.log(destList.length)
+        console.log(shifts.data.find(shift => shift.id == destination.droppableId)?.maxPeople)
+        if (destList.length >= shifts.data.find(shift => shift.id == destination.droppableId)?.maxPeople) {
+            alert("Shift has reached its maximum capacity")
+            return
+        }
+
+        const [moved] = sourceList.splice(source.index, 1)
+        destList.splice(destination.index, 0, moved)
+
+        setShiftData(prev => ({
+            ...prev,
+            [source.droppableId]: sourceList,
+            [destination.droppableId]: destList
+        }))
     }
 
-    if (scheduleLoading || employeesLoading) {
+    const buildPayload = (shiftData) => {
+        const shifts = Object.entries(shiftData)
+            .filter(([key]) => key !== 'unassigned')
+            .map(([shiftId, employees]) => ({
+                shift_id: parseInt(shiftId),
+                employees: employees.map(emp => emp.id)
+            }));
+
+        return shifts
+    };
+
+    const handleGenerateSchedule = () => {
+        const payload = buildPayload(shiftData)
+        assignToShift({
+            "schedule_id": params?.id,
+            "shifts": payload
+        }).then(() => {
+            navigate("/dashboard/schedules")
+        }).catch((err) => {
+            console.log(err)
+        })
+    }
+
+    if (scheduleLoading || employeesLoading || assignToShiftLoading) {
         return (<div className="flex items-center justify-center h-screen">
             <Spinner />
         </div>)
     }
 
     return (
-        <div className="m-8 flex flex-col gap-4">
-            <section className="flex flex-row items-center justify-between">
-                {/* <Button className={"border border-gray-200 rounded-sm bg-white"} buttonName={"Back"}/> */}
+        <div className="flex flex-col gap-4 h-[96vh] overflow-y-hidden">
+            <section className="m-2 flex flex-row items-center justify-between">
                 <button
                     onClick={() => navigate(-1)}
                     className="flex gap-2 border border-gray-200 rounded-sm bg-white p-2 px-4 hover:bg-gray-100 transition-colors cursor-pointer"
@@ -98,14 +115,14 @@ const AssignSchedule = () => {
                     Back
                 </button>
                 <div className="flex flex-1 flex-col gap-0 items-start justify-start left-0 w-full">
-                    <h1 className="font-bold text-3xl text-center w-full">Assign employees - {scheduleInfo?.data?.name}</h1>
+                    <h1 className="font-bold text-3xl text-center w-full">Assign employees - {scheduleInfo?.data?.departmentName}</h1>
                     <p className="text-sm text-gray-500 pt-2 text-center w-full">
-                        {formatDate(scheduleInfo?.data?.startDate)} - {formatDate(scheduleInfo?.data?.endDate)}
+                        {formatDate(scheduleInfo?.data?.startTime)} - {formatDate(scheduleInfo?.data?.endTime)}
                     </p>
                 </div>
-                <Button icon={"CheckCheck"} className={"rounded-sm"} buttonName={"Generate schedule"} />
+                <Button icon={"CheckCheck"} className={"rounded-sm"} buttonName={"Generate schedule"} onClick={handleGenerateSchedule} />
             </section>
-            <section>
+            <section className="m-2">
                 <div className="flex gap-4 items-center justify-center border-b border-gray-200 rounded-sm p-0 px-4">
                     <LucideIcon
                         name={search ? "X" : "Search"}
@@ -121,26 +138,26 @@ const AssignSchedule = () => {
             </section>
 
             <DragDropContext onDragEnd={handleDragEnd}>
-                <div className="grid grid-cols-12 gap-2">
+                <div className="overflow-y-hidden m-2 mb-4 flex-1 grid grid-cols-12 gap-2">
 
                     {/* Unassigned Employees */}
-                    <div className="col-span-3 border border-gray-200 rounded-sm p-4 bg-white">
+                    <div className="overflow-y-hidden col-span-4 border border-gray-200 rounded-sm p-4 bg-white">
                         <div className="flex gap-2 items-center justify-center p-2">
                             <LucideIcon name="Users" />
                             <h2 className="font-bold text-2xl text-center w-full text-gray-500">
                                 Employees
                             </h2>
-                            <Badge value="8" severity="success"></Badge>
+                            <Badge value={shiftData?.unassigned?.length} severity="success"></Badge>
                         </div>
                         <Droppable droppableId="unassigned">
                             {(provided, snapshot) => (
                                 <div
                                     ref={provided.innerRef}
                                     {...provided.droppableProps}
-                                    className={`flex flex-col gap-2 min-h-[400px] space-y-2 p-2 rounded-lg transition-colors ${snapshot.isDraggingOver ? 'bg-blue-50' : 'bg-gray-50'
+                                    className={`h-[95%] overflow-y-auto flex flex-col gap-2 space-y-2 p-2 rounded-lg transition-colors ${snapshot.isDraggingOver ? 'bg-blue-50' : 'bg-gray-50'
                                         }`}
                                 >
-                                    {accounts?.data?.map((account, index) => (
+                                    {shiftData?.unassigned?.map((account, index) => (
                                         <Draggable key={account.id} draggableId={`${account.id}`} index={index}>
                                             {(provided, snapshot) => (
                                                 <div
@@ -151,18 +168,15 @@ const AssignSchedule = () => {
                                                         }`}
                                                 >
                                                     <div className="flex items-center space-x-3">
-                                                        <Avatar name={account.firstName} className="w-8 h-8">
-                                                            {/* <AvatarFallback className="bg-gray-200 text-gray-700 text-xs">
-                                                                {getInitials(employee.name)}
-                                                            </AvatarFallback> */}
-                                                            {getInitials(`${account.firstName} ${account.lastName}`)}
+                                                        <Avatar name={account.name} className="w-8 h-8">
+                                                            {getInitials(account.name)}
                                                         </Avatar>
                                                         <div className="flex-1 min-w-0">
                                                             <p className="font-medium text-sm text-gray-900 truncate">
-                                                                {account.firstName} {account.lastName}
+                                                                {account.name}
                                                             </p>
                                                             <p className="text-xs text-gray-500 truncate">
-                                                                {account.roleCode}
+                                                                {account.email}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -176,17 +190,21 @@ const AssignSchedule = () => {
                         </Droppable>
                     </div>
 
+                    {/* className="grid auto-flow-col gap-2 w-max"
+    style={{ gridAutoColumns: 'minmax(200px, 1fr)' }} */}
+
                     {/* Shift Columns */}
-                    <div className="col-span-9 grid grid-cols-12 gap-2 overflow-x-auto">
+                    {/* <div className="col-span-9 grid grid-cols-12 gap-2 overflow-x-auto"> */}
+                    <div className="col-span-8 grid grid-flow-col auto-cols-[minmax(400px,_1fr)] gap-2 overflow-x-auto">
                         {
-                            shifts.map((shift) => (<>
-                                <div className="col-span-4 rounded-sm p-4 bg-white">
+                            shifts?.data?.map((shift) => (<>
+                                <div className="rounded-sm p-4 bg-white">
                                     <div className="flex gap-2 items-center justify-center p-2">
                                         <LucideIcon name="Users" />
-                                        <h2 className="font-bold text-2xl text-center w-full text-gray-500">
+                                        <h2 className="font-bold text-2xl text-center flex-1 text-gray-500">
                                             {shift.name}
                                         </h2>
-                                        <Badge value={shift.requiredEmployees} severity="success"></Badge>
+                                        <Tag value={`${shiftData[shift.id]?.length} / ${shift?.maxPeople}`} severity="success"></Tag>
                                     </div>
 
                                     <Droppable droppableId={`${shift.id}`}>
@@ -194,10 +212,39 @@ const AssignSchedule = () => {
                                             <div
                                                 ref={provided.innerRef}
                                                 {...provided.droppableProps}
-                                                className={`flex flex-col gap-2 min-h-[400px] space-y-2 p-2 rounded-lg transition-colors ${snapshot.isDraggingOver ? 'bg-blue-50' : 'bg-gray-50'
+                                                className={`min-h-[400px] flex flex-col gap-2 space-y-2 p-2 rounded-lg transition-colors ${snapshot.isDraggingOver ? 'bg-blue-50' : 'bg-gray-50'
                                                     }`}
                                             >
-                                                {shiftData?.[shift.id]?.map((account, index) => (
+                                                {shiftData?.[shift?.id]?.map((account, index) => (
+                                                    <Draggable key={account?.id} draggableId={`${account?.id}`} index={index}>
+                                                        {(provided, snapshot) => (
+                                                            <div
+                                                                ref={provided.innerRef}
+                                                                {...provided.draggableProps}
+                                                                {...provided.dragHandleProps}
+                                                                className={`p-3 bg-white rounded-lg border shadow-sm cursor-move transition-shadow hover:shadow-md ${snapshot.isDragging ? 'shadow-lg' : ''
+                                                                    }`}
+                                                            >
+                                                                <div className="flex items-center space-x-3">
+                                                                    <Avatar name={account?.name} className="w-8 h-8">
+                                                                        {getInitials(account?.name)}
+                                                                    </Avatar>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="font-medium text-sm text-gray-900 truncate">
+                                                                            {account?.name}
+                                                                        </p>
+                                                                        <p className="text-xs text-gray-500 truncate">
+                                                                            {account?.email}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </Draggable>
+                                                ))}
+                                                {provided.placeholder}
+
+                                                {/* {accounts?.data?.map((account, index) => (
                                                     <Draggable key={account.id} draggableId={`${account.id}`} index={index}>
                                                         {(provided, snapshot) => (
                                                             <div
@@ -208,23 +255,22 @@ const AssignSchedule = () => {
                                                                     }`}
                                                             >
                                                                 <div className="flex items-center space-x-3">
-                                                                    <Avatar name={account.firstName} className="w-8 h-8">
-                                                                        {getInitials(`${account.firstName} ${account.lastName}`)}
+                                                                    <Avatar name={account.name} className="w-8 h-8">
+                                                                        {getInitials(account.name)}
                                                                     </Avatar>
                                                                     <div className="flex-1 min-w-0">
                                                                         <p className="font-medium text-sm text-gray-900 truncate">
-                                                                            {account.firstName} {account.lastName}
+                                                                            {account.name}
                                                                         </p>
                                                                         <p className="text-xs text-gray-500 truncate">
-                                                                            {account.roleCode}
+                                                                            {account.email}
                                                                         </p>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         )}
                                                     </Draggable>
-                                                ))}
-                                                {provided.placeholder}
+                                                ))} */}
                                             </div>
                                         )}
                                     </Droppable>

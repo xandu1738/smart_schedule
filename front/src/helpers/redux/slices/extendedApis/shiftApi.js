@@ -32,8 +32,16 @@ const shiftsApi = enhancedApi.injectEndpoints({
             }),
             providesTags: [SERVICES.SHIFT.name],
         }),
+        assignToShift: builder.mutation({
+            query: (data) => ({
+                "SERVICE": SERVICES.SHIFT.name,
+                "ACTION": SERVICES.SHIFT.ACTION.ASSIGN_TO_SHIFT,
+                "data": data,
+            }),
+            invalidatesTags: [SERVICES.SHIFT.name],
+        }),
     }),
 })
 
-export const { useGetAllShiftsQuery, useCreateShiftMutation, useShiftDetailsQuery } = shiftsApi
+export const { useGetAllShiftsQuery, useCreateShiftMutation, useShiftDetailsQuery, useAssignToShiftMutation } = shiftsApi
 

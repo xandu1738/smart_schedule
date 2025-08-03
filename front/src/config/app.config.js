@@ -33,6 +33,7 @@ export const SERVICES = {
             GET_ALL: "shifts",
             CREATE_SHIFT: "createShift",
             SHIFT_DETAILS: "shiftDetails",
+            ASSIGN_TO_SHIFT: "assignToShift"
         }
     },
     EMPLOYEE: {
@@ -52,7 +53,8 @@ export const SERVICES = {
             SAVE: "save",
             DELETE: "delete",
             EDIT: "edit",
-            GET_SINGLE: "getSingleSchedule"
+            GET_SINGLE: "getSingleSchedule",
+            GET_DEPARTMENT_SCHEDULES: "getMySchedules"
         }
     }
 }

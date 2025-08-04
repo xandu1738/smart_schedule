@@ -34,12 +34,6 @@ public class SetUp {
     @Value("${USE_DOMAINS:true}")
     Boolean useDomains;
 
-    @Value("${ADMIN_ROLE_NAME}")
-    String adminRoleName;
-
-    @Value("${ADMIN_ROLE_DOMAIN}")
-    AppDomains adminDomain;
-
     private final SystemDomainRepository domainRepository;
     private final SystemPermissionRepository permissionRepository;
     private final SystemRolePermissionRepository permissionAssignmentRepository;
@@ -68,11 +62,11 @@ public class SetUp {
         DefaultRoles[] values = DefaultRoles.values();
         //add roles to db
         for (DefaultRoles value : values) {
-            Optional<SystemRoleModel> existingRole = roleRepository.findFirstByRoleCode(value.name());
+            Optional<SystemRoleModel> existingRole = roleRepository.findByRoleCode(value.name());
 
             if (existingRole.isEmpty()) {
                 SystemRoleModel role = SystemRoleModel.builder()
-                        .roleName(value.name())
+                        .roleName(value.name().replaceAll("_"," "))
                         .roleCode(value.name())
                         .roleDomain(value.getDomain())
                         .build();
@@ -87,9 +81,11 @@ public class SetUp {
                 roleRepository.save(role);
             }
         }
+
+        //Setting up role permissions
+        setupPermissions();
     }
 
-    @PostConstruct
     public void setupPermissions() {
         permissionRepository.deleteAll();
         DefaultPermissions[] perms = DefaultPermissions.values();
@@ -122,7 +118,7 @@ public class SetUp {
                     log.warn("Permission {} does not match role domain {}. Skipping assignment.", permission.name(), role.getDomain());
                     return; // Skip if the permission's domain does not match the role's domain
                 }
-                Optional<SystemRolePermissionAssignmentModel> rolePerms = systemRolePermissionRepository.findFirstByRoleCodeAndPermissionCode(role.name(), permission.name());
+                Optional<SystemRolePermissionAssignmentModel> rolePerms = systemRolePermissionRepository.findByRoleCodeAndPermissionCode(role.name(), permission.name());
 
                 if (rolePerms.isPresent()){
                     log.info("Permission {} already assigned to role {}", permission.name(), role.getRoleName());

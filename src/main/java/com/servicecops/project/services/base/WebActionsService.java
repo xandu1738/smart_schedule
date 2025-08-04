@@ -21,6 +21,7 @@ public class WebActionsService {
     private final ScheduleService scheduleService;
     private final ShiftManagementService shiftManagementService;
     private final EmployeeService employeeService;
+    private final ReportManagerService reportManagerService;
 
     public OperationReturnObject processAction(String service, String action, JSONObject payload) throws AuthorizationRequiredException {
         return switch (service) {
@@ -30,6 +31,7 @@ public class WebActionsService {
             case "Schedule" -> scheduleService.process(action, payload);
             case "Shift" -> shiftManagementService.process(action, payload);
             case "Employee" -> employeeService.process(action, payload);
+            case "Report" -> reportManagerService.process(action, payload);
 
             default -> {
                 OperationReturnObject res = new OperationReturnObject();

@@ -30,7 +30,7 @@ public class UserDtoMapper implements Function<SystemUserModel, UserDto> {
             }
         }
 
-        SystemRoleModel role = systemRoleRepository.findFirstByRoleCode(systemUserModel.getRoleCode())
+        SystemRoleModel role = systemRoleRepository.findByRoleCode(systemUserModel.getRoleCode())
                 .orElseThrow(() -> new IllegalStateException("Role not found for code: " + systemUserModel.getRoleCode()));
 
         return new UserDto(

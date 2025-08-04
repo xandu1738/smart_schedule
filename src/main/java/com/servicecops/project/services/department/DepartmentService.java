@@ -3,9 +3,11 @@ package com.servicecops.project.services.department;
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.models.database.Department;
 import com.servicecops.project.models.database.Institution;
+import com.servicecops.project.models.jpahelpers.enums.AppDomains;
 import com.servicecops.project.repositories.DepartmentRepository;
 import com.servicecops.project.repositories.InstitutionRepository;
 import com.servicecops.project.services.base.BaseWebActionsService;
+import com.servicecops.project.services.department.Dtos.DepartmentResponseDTO;
 import com.servicecops.project.utils.OperationReturnObject;
 import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import lombok.Getter;
@@ -60,33 +62,45 @@ public class DepartmentService extends BaseWebActionsService {
 
   public OperationReturnObject add(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
-    requires(request,Params.DATA.getLabel());
+    requires(request, Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data,Params.NAME.getLabel(),Params.INSTITUTION_ID.getLabel(), Params.MANAGER_NAME.getLabel(),
-        Params.NO_OF_EMPLOYEES.getLabel(), Params.DESCRIPTION.getLabel());
+
+    requires(data, Params.NAME.getLabel(), Params.MANAGER_NAME.getLabel(),
+      Params.NO_OF_EMPLOYEES.getLabel(), Params.DESCRIPTION.getLabel());
 
     String departmentName = data.getString(Params.NAME.getLabel());
     String managerName = data.getString(Params.MANAGER_NAME.getLabel());
     Integer noOfEmployees = data.getInteger(Params.NO_OF_EMPLOYEES.getLabel());
     String description = data.getString(Params.DESCRIPTION.getLabel());
-    Long institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
 
-
-    Institution institution = institutionRepository.findById(institutionId).orElse(null);
-    Department department = departmentRepository.findByNameAndInstitutionId(departmentName, institutionId)
-        .orElse(null);
-
-    if (institution == null) {
-      throw new IllegalArgumentException("institution not found with id: " + institutionId);
-    }
-
-    if (institution != null && department != null) {
-      throw new IllegalArgumentException("department with name " + departmentName + " already exists.");
-    }
+    Integer institutionId = null;
 
     Department newDepartment = new Department();
+
+    if (getUserDomain() == AppDomains.INSTITUTION) {
+      institutionId = authenticatedUser().getInstitutionId();
+    }
+
+    if (getUserDomain() == AppDomains.BACK_OFFICE) {
+      institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
+
+    }
+
+
+
+    if (institutionId == null) {
+      throw new IllegalArgumentException("institutionId is required");
+    }
+
+    Boolean departmentExists = departmentRepository.existsByNameAndInstitutionId(departmentName, institutionId.longValue());
+
+
+    if (departmentExists) {
+      throw new IllegalArgumentException("Department with name " + departmentName + " already exists");
+    }
+
+    newDepartment.setInstitutionId(institutionId.longValue());
     newDepartment.setName(data.getString("name"));
-    newDepartment.setInstitutionId(institutionId);
     newDepartment.setManagerName(managerName);
     newDepartment.setNoOfEmployees(noOfEmployees);
     newDepartment.setDescription(description);
@@ -97,28 +111,61 @@ public class DepartmentService extends BaseWebActionsService {
     departmentRepository.save(newDepartment);
 
     System.out.println("New department: " + newDepartment.getName() + "successfully created");
+
+
+    DepartmentResponseDTO response = new DepartmentResponseDTO();
+    response.setId(newDepartment.getId());
+    response.setName(newDepartment.getName());
+    response.setDescription(newDepartment.getDescription());
+    response.setCreatedAt(newDepartment.getCreatedAt());
+    response.setActive(newDepartment.isActive());
+
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200,newDepartment.getName() + " successfully added", newDepartment);
+    res.setCodeAndMessageAndReturnObject(200, newDepartment.getName() + " successfully added", newDepartment);
 
     return res;
   }
-
   public OperationReturnObject getAll(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request,Params.DATA.getLabel());
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
-    requires(data,Params.INSTITUTION_ID.getLabel());
 
-    Long institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
+    Long institutionId = null;
 
-    List<Department> departments = departmentRepository.findByInstitutionId(institutionId).orElseThrow(() -> new IllegalArgumentException("not found "));;
+    if( getUserDomain() == AppDomains.BACK_OFFICE) {
+      requires(data,Params.INSTITUTION_ID.getLabel());
+      institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
+    }
+
+    if (getUserDomain() == AppDomains.INSTITUTION) {
+      institutionId = authenticatedUser().getInstitutionId().longValue();
+    }
+
+    if(institutionId == null) {
+      throw new IllegalArgumentException("institution id not found: " + institutionId);
+    }
+
+    List<Department> departments = departmentRepository.findByInstitutionId(institutionId).orElseThrow(() -> new IllegalArgumentException("not found "));
+
+
+    List<DepartmentResponseDTO> response = departments.stream()
+      .map(dep -> new DepartmentResponseDTO(
+        dep.getId(),
+        dep.getName(),
+        dep.getInstitutionId(),
+        dep.getDescription(),
+        dep.getNoOfEmployees(),
+        dep.getManagerName(),
+        dep.getCreatedAt(),
+        dep.isActive()
+      ))
+      .toList();
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setReturnCodeAndReturnObject(200, departments);
+    res.setCodeAndMessageAndReturnObject(200,"data returned successfully", response);
 
     return res;
   }
-
   public OperationReturnObject findById(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires( request,Params.DATA.getLabel());
@@ -127,14 +174,15 @@ public class DepartmentService extends BaseWebActionsService {
 
     Long departmentId = data.getLong(Params.DEPARTMENT_ID.getLabel());
 
-    Department departments = departmentRepository.findById(departmentId).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
+    Department department = departmentRepository.findById(departmentId).orElseThrow(() -> new IllegalArgumentException("Institution not found with id: " + request.getLong("id")));
+
+    DepartmentResponseDTO response = new DepartmentResponseDTO().fromDepartment(department);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200,"request successful", departments);
+    res.setCodeAndMessageAndReturnObject(200,"request successful", response);
 
     return res;
   }
-
   public OperationReturnObject edit(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
 
@@ -168,10 +216,13 @@ public class DepartmentService extends BaseWebActionsService {
       department.setDescription(data.getString(Params.DESCRIPTION.getLabel()));
     }
 
-    departmentRepository.save(department);
+    Department updatedDepartment = departmentRepository.save(department);
+
+
+    DepartmentResponseDTO response = new DepartmentResponseDTO().fromDepartment(updatedDepartment);
 
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200,"Department edited successfully" ,department);
+    res.setCodeAndMessageAndReturnObject(200,"Department edited successfully" ,response);
 
     return res;
   }
@@ -188,8 +239,16 @@ public class DepartmentService extends BaseWebActionsService {
     department.setActive(false);
     departmentRepository.save(department);
 
+    DepartmentResponseDTO response = new DepartmentResponseDTO();
+    response.setId(department.getId());
+    response.setName(department.getName());
+    response.setDescription(department.getDescription());
+//    response.setCreatedAt(department.getCreatedAt());
+    response.setActive(department.isActive());
+
+
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200,"edited successfully" ,department);
+    res.setCodeAndMessageAndReturnObject(200,"edited successfully" ,response);
 
     return res;
   }

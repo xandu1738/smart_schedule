@@ -28,7 +28,7 @@ public class Employee {
   private String email;
 
   @Column(name = "status", nullable = false)
-  private String status;
+  private String status; // used for shift assignment
 
   @ColumnDefault("now()")
   @Column(name = "created_at")
@@ -41,7 +41,7 @@ public class Employee {
   private Long createdBy;
 
   @Column(name = "archived")
-  private boolean archived;
+  private boolean archived; // used for soft delete
 
   @Column(name = "updated_at")
   private Timestamp updatedAt;

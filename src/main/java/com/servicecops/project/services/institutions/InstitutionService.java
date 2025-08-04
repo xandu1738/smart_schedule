@@ -112,7 +112,6 @@ public class InstitutionService extends BaseWebActionsService {
 
     return res;
   }
-
   public OperationReturnObject getAll(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
 
@@ -123,7 +122,56 @@ public class InstitutionService extends BaseWebActionsService {
 
     return res;
   }
+  public OperationReturnObject getAllDepartmentsInInstitution(JSONObject request) throws AuthorizationRequiredException {
+    requiresAuth();
 
+    List<Institution> institutions = institutionRepository.findAll(); // Explicitly type List
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions); // Returns list of Institution objects
+
+    return res;
+  }
+  public OperationReturnObject getAllActiveDepartmentsInInstitution(JSONObject request) throws AuthorizationRequiredException {
+    requiresAuth();
+
+    List<Institution> institutions = institutionRepository.findAll(); // Explicitly type List
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions); // Returns list of Institution objects
+
+    return res;
+  }
+  public OperationReturnObject getAllInActiveDepartmentsInInstitution(JSONObject request) throws AuthorizationRequiredException {
+    requiresAuth();
+
+    List<Institution> institutions = institutionRepository.findAll(); // Explicitly type List
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions); // Returns list of Institution objects
+
+    return res;
+  }
+  public OperationReturnObject getAllEmployeesInInstitution(JSONObject request) throws AuthorizationRequiredException {
+    requiresAuth();
+
+    List<Institution> institutions = institutionRepository.findAll(); // Explicitly type List
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions); // Returns list of Institution objects
+
+    return res;
+  }
+  public OperationReturnObject getAllSchedulesInInstitution(JSONObject request) throws AuthorizationRequiredException {
+    requiresAuth();
+
+    List<Institution> institutions = institutionRepository.findAll(); // Explicitly type List
+
+    OperationReturnObject res = new OperationReturnObject();
+    res.setReturnCodeAndReturnObject(200, institutions); // Returns list of Institution objects
+
+    return res;
+  }
   public OperationReturnObject findById(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.ID.getLabel()); // Ensure ID is provided
@@ -137,7 +185,6 @@ public class InstitutionService extends BaseWebActionsService {
 
     return res;
   }
-
   public OperationReturnObject edit(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());
@@ -229,6 +276,7 @@ public class InstitutionService extends BaseWebActionsService {
 
     return res;
   }
+
   public OperationReturnObject delete(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());

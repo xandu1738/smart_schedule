@@ -41,6 +41,8 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     private DepartmentRepository departmentRepository;
     @Autowired
     private EmployeeRepository employeeRepository;
+    @Autowired
+    private ScheduleRecordRepository scheduleRecordRepository;
 
 
     public OperationReturnObject process(String action, JSONObject payload) throws AuthorizationRequiredException {
@@ -134,7 +136,7 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     public Boolean hasRole(String roleCode) {
         SystemUserModel usersModel = authenticatedUser();
         if (usersModel != null) {
-            Optional<SystemRoleModel> rolesModel = roleRepository.findFirstByRoleCode(usersModel.getRoleCode());
+            Optional<SystemRoleModel> rolesModel = roleRepository.findByRoleCode(usersModel.getRoleCode());
             if (rolesModel.isPresent()) {
                 SystemRoleModel role = rolesModel.get();
                 return Objects.equals(role.getRoleCode(), roleCode);
@@ -233,7 +235,7 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     public SystemRoleModel getRole() {
         String roleCode = authenticatedUser().getRoleCode();
         // query for the role code
-        Optional<SystemRoleModel> rolesModel = roleRepository.findFirstByRoleCode(roleCode);
+        Optional<SystemRoleModel> rolesModel = roleRepository.findByRoleCode(roleCode);
         if (rolesModel.isEmpty()) {
             throw new IllegalStateException("UNKNOWN USER ROLE");
         }
@@ -245,10 +247,14 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
      *
      * @param domain AppDomains - The domain in quest
      */
-    public void belongsTo(AppDomains domain) {
+    public void belongsTo(AppDomains... domains) {
+
+      for (AppDomains domain : domains) {
         if (getUserDomain() != domain) {
-            throw new IllegalStateException("You have no access to the " + domain + " services");
+          throw new IllegalStateException("You have no access to the " + domain + " services");
         }
+      }
+
     }
 
     /**
@@ -326,8 +332,8 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
                 .orElseThrow(() -> new IllegalStateException("Employee does not exist"));
     }
 
-    public List<ScheduleRecord> getEmployeeScheduleRecords(Long employeeId, Long scheduleId) {
-        return Collections.EMPTY_LIST;
+    public List<ScheduleRecord> getEmployeeScheduleRecords(Integer employeeId, Integer scheduleId) {
+        return scheduleRecordRepository.findAllByEmployeeIdAndScheduleId(employeeId,scheduleId);
     }
 
 }

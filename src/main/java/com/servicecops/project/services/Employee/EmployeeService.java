@@ -73,6 +73,7 @@ public class EmployeeService extends BaseWebActionsService {
             newEmployee.setCreatedAt(Timestamp.from(Instant.now()));
             newEmployee.setDaysOffUsed(data.getInteger(Params.DAYS_OFF_USED.getLabel()));
             newEmployee.setCreatedBy(authenticatedUser().getId());
+            newEmployee.setArchived(false);
             employeeRepository.save(newEmployee);
 
             OperationReturnObject res = new OperationReturnObject();
@@ -92,7 +93,7 @@ public class EmployeeService extends BaseWebActionsService {
             requires(data, Params.DEPARTMENT_ID.getLabel());
 
             Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
-            List<Employee> employees = employeeRepository.findByDepartmentAndArchived(departmentId, true);
+            List<Employee> employees = employeeRepository.findAllByDepartment(departmentId);
 
             OperationReturnObject res = new OperationReturnObject();
             res.setReturnCodeAndReturnObject(200, employees);
@@ -116,10 +117,6 @@ public class EmployeeService extends BaseWebActionsService {
 
             if (data.containsKey("name") && data.getString("name") != null) {
                 employee.setName(data.getString("name"));
-            }
-
-            if (data.containsKey("email") && data.getString("email") != null) {
-                employee.setEmail(data.getString("email"));
             }
 
             if (data.containsKey("department") && data.getInteger("department") != null) {
@@ -183,7 +180,7 @@ public class EmployeeService extends BaseWebActionsService {
 
             Long employeeId = data.getLong(Params.ID.getLabel());
 
-            Employee employee = employeeRepository.findByIdAndArchived(employeeId.intValue(), true).orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + request.getLong("id")));
+            Employee employee = employeeRepository.findById((long) employeeId.intValue()).orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + employeeId));
 
             OperationReturnObject res = new OperationReturnObject();
             res.setCodeAndMessageAndReturnObject(200, "", employee);

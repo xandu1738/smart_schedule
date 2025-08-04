@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:17
+    container_name: smart_system_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: smart_system
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5888:5432"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smart_schedule_app
+    depends_on:
+      - db
+    ports:
+      - "7005:7005"
+    environment:
+      SPRING_PROFILE: dev
+      DB_URL: jdbc:postgresql://db:5432/smart_system
+      DB_PASSWORD: 1234
+      SERVER_PORT: 7005
+
+volumes:
+  postgres_data:

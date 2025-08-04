@@ -93,7 +93,7 @@ public class JwtUtility {
         // archived staff members should not log in
         user.setLastLoggedInAt(stamp);
         userRepository.save(user);
-        Optional<SystemRoleModel> rolesModel = roleRepository.findFirstByRoleCode(user.getRoleCode());
+        Optional<SystemRoleModel> rolesModel = roleRepository.findByRoleCode(user.getRoleCode());
         SystemRoleModel role = rolesModel.orElseThrow(() -> new IllegalStateException("User has no role assigned"));
         claims.put("role", role.getRoleName());
         claims.put("type", role.getRoleName());

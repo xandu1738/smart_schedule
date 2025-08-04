@@ -136,7 +136,7 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     public Boolean hasRole(String roleCode) {
         SystemUserModel usersModel = authenticatedUser();
         if (usersModel != null) {
-            Optional<SystemRoleModel> rolesModel = roleRepository.findFirstByRoleCode(usersModel.getRoleCode());
+            Optional<SystemRoleModel> rolesModel = roleRepository.findByRoleCode(usersModel.getRoleCode());
             if (rolesModel.isPresent()) {
                 SystemRoleModel role = rolesModel.get();
                 return Objects.equals(role.getRoleCode(), roleCode);
@@ -235,7 +235,7 @@ public abstract class BaseWebActionsService implements BaseWebActionsImpl {
     public SystemRoleModel getRole() {
         String roleCode = authenticatedUser().getRoleCode();
         // query for the role code
-        Optional<SystemRoleModel> rolesModel = roleRepository.findFirstByRoleCode(roleCode);
+        Optional<SystemRoleModel> rolesModel = roleRepository.findByRoleCode(roleCode);
         if (rolesModel.isEmpty()) {
             throw new IllegalStateException("UNKNOWN USER ROLE");
         }

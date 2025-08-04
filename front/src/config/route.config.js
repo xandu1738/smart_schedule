@@ -11,7 +11,10 @@ export const APP_ROUTE = {
     DEPARTMENTS: 'departments',
     SCHEDULES: 'schedules',
     SHIFTS: 'shifts',
-    ACCOUNTS: 'accounts'
+    ACCOUNTS: 'accounts',
+
+    // Schedule
+    GENERATE_SCHEDULE: 'generate-schedule'
 }
 
 /**

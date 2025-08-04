@@ -1,7 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { selectIsAuthenticated } from "../helpers/redux/slices/authSlice";
-import { Navigate } from "react-router";
+import { Navigate, useLocation } from "react-router";
 import { APP_ROUTE } from "../config/route.config";
 
 const ProtectedRoute = ({
@@ -10,10 +10,12 @@ const ProtectedRoute = ({
     permissions = [],
     children,
 }) => {
+
+    const location = useLocation()
     const isAuthenticated = useSelector(selectIsAuthenticated)
+
     if (!isAuthenticated && requiresAuth) {
-        // early return on not authenticated
-        return <Navigate to={`/${APP_ROUTE.SIGN_IN}`} />
+        return <Navigate to={`/${APP_ROUTE.SIGN_IN}`} state={{ from: location?.pathname }} />
     }
     return children;
 };

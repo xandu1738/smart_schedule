@@ -32,9 +32,8 @@ const App = () => {
         <Routes>
             <Route path={APP_ROUTE.SIGN_IN} element={<SignIn />} />
             <Route index element={<Navigate to={APP_ROUTE.DASHBOARD} />} />
-            <Route path={APP_ROUTE.DASHBOARD} element={<ProtectedRoute requiresAuth={true}>
-                <DashboardLayout />
-            </ProtectedRoute>}>
+            <Route path={APP_ROUTE.DASHBOARD} element={ <ProtectedRoute requiresAuth={true}> <DashboardLayout /> </ProtectedRoute> }>
+
                 <Route index element={<Dashboard />} />
                 <Route
                     path={APP_ROUTE.INSTITUTIONS}
@@ -63,6 +62,7 @@ const App = () => {
                 <Route path={APP_ROUTE.ACCOUNTS} element={<Accounts />}>
                     <Route index element={<h1>Account</h1>} />
                 </Route>
+
             </Route>
         </Routes>
     );

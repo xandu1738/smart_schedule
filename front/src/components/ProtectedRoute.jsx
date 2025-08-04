@@ -5,10 +5,10 @@ import { Navigate, useLocation } from "react-router";
 import { APP_ROUTE } from "../config/route.config";
 
 const ProtectedRoute = ({
-	requiresAuth = true,
-	domain = [],
-	permissions = [],
-	children,
+    requiresAuth = true,
+    domain = [],
+    permissions = [],
+    children,
 }) => {
 
     const location = useLocation()
@@ -17,7 +17,7 @@ const ProtectedRoute = ({
     if (!isAuthenticated && requiresAuth) {
         return <Navigate to={`/${APP_ROUTE.SIGN_IN}`} state={{ from: location?.pathname }} />
     }
-	return children;
+    return children;
 };
 
 export default ProtectedRoute;

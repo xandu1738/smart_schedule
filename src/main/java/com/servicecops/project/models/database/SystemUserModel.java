@@ -1,10 +1,8 @@
 package com.servicecops.project.models.database;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,16 +12,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 @Entity
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "system_user", schema = "public", catalog = "project_db")
+@Table(name = "system_user", schema = "public")
 public class SystemUserModel implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "id")
     private Long id;
+    @Column(name = "institution_id")
+    private Integer institutionId;
     @Basic
     @Column(name = "first_name")
     private String firstName;
@@ -31,14 +32,12 @@ public class SystemUserModel implements UserDetails {
     @Column(name = "last_name")
     private String lastName;
     @Basic
+    @JsonIgnore
     @Column(name = "password")
     private String password;
     @Basic
     @Column(name = "email")
     private String email;
-    @Basic
-    @Column(name = "username")
-    private String username;
     @Basic
     @Column(name = "role_code")
     private String roleCode;
@@ -62,7 +61,7 @@ public class SystemUserModel implements UserDetails {
 
     @Override
     public String getUsername() {
-        return username;
+        return email;
     }
 
     @Override

@@ -1,31 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submission Confirmation</title>
     <style>
-        /* Main table */
+
         table {
             width: 100%;
-            cellpadding: 0;
-            cellspacing: 0;
-            border: 0;
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-collapse: collapse;
+            margin-top: 20px;
         }
 
-        /* Padding for the main content */
-        td {
-            padding: 30px;
+        th, td {
+            border: 1px solid #dddddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: rgba(2, 42, 83, 0.75);
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
         }
 
         /* Heading style */
         h2 {
-            color: #007bff;
+            color: rgba(20, 16, 94, 0.9);
             text-align: center;
         }
 
@@ -38,21 +46,10 @@
         /* Button style for the "Join Meeting" link */
         a {
             /*background-color: #007bff;*/
-            color: #007bff;
+            color: rgba(41, 28, 246, 1);
             padding-block: 20px;
             text-decoration: none;
             border-radius: 5px;
-        }
-
-        /* Inner table with meeting details */
-        table.inner-table {
-            width: 100%;
-            cellpadding: 10;
-            cellspacing: 0;
-            border: 0;
-            background-color: #f1f1f1;
-            border-radius: 5px;
-            margin: 20px 0;
         }
 
         /* Text for meeting topic */
@@ -87,10 +84,10 @@
         }
 
         .header {
-            background: rgb(41, 28, 246);
-            background: -moz-linear-gradient(117deg, rgba(41, 28, 246, 1) 0%, rgba(44, 255, 228, 1) 100%);
-            background: -webkit-linear-gradient(117deg, rgba(41, 28, 246, 1) 0%, rgba(44, 255, 228, 1) 100%);
-            background: linear-gradient(117deg, rgba(41, 28, 246, 1) 0%, rgba(44, 255, 228, 1) 100%);
+            background: rgba(20, 16, 94, 0.9);
+            background: -moz-linear-gradient(117deg, rgba(20, 16, 94, 0.9) 0%, rgba(41, 28, 246, 1) 100%);
+            background: -webkit-linear-gradient(117deg, rgba(20, 16, 94, 0.9) 0%, rgba(41, 28, 246, 1) 100%);
+            background: linear-gradient(117deg, rgba(20, 16, 94, 0.9) 0%, rgba(41, 28, 246, 1) 100%);
             filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#291cf6", endColorstr="#2cffe4", GradientType=1);
             /*background: url('/templates/images/background.jpeg') no-repeat center center;*/
             background-size: cover;
@@ -127,19 +124,27 @@
 
         .content {
             padding: 20px;
+            /*background-color: rgba(219, 255, 254, 0.43);*/
+            position: relative;
+        }
+
+        .quote {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .tobi {
+            width: 30%;
+            height: auto;
+            z-index: 2;
         }
 
         h1 {
-            color: #007bff;
+            color: rgba(1, 64, 135, 0.84);
             text-transform: uppercase;
             margin-top: 10px;
-        }
-
-        .details {
-            margin-top: 20px;
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 8px;
         }
 
         .details p {
@@ -147,13 +152,13 @@
         }
 
         .footer {
-            background-color: #007bff;
+            background-color: rgba(2, 42, 83, 0.75);
             padding: 20px;
             text-align: center;
             color: #ffffff;
         }
 
-        .footer p {
+        .footer a {
             color: #ffffff;
             text-decoration: none;
         }
@@ -168,16 +173,47 @@
 <body>
 <div class="container">
     <div class="header">
-        <img th:src="@{https://servspace.servicecops.com/assets/servspace-XnBP90D7.png}" alt="Company Logo">
-        <h1>Servspace Support</h1>
+        <!--        <img src="../static/logo.png" th:src="@{logo.png}" alt="Company Logo">-->
+        <h1>Week's Schedule</h1>
     </div>
 
     <div class="content">
-        <div th:utext="${body}"></div>
+        <p>
+            Dear <span th:text="${name}"></span>,<br/>
+            Please Receive this week's schedule.<br/>
+            Trace your free days and endeavor to abide by this.<br/>
+        </p>
+        <table>
+            <thead>
+            <tr>
+                <th>Day</th>
+                <th>Developers</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Iterate over the map to render each day and its developers -->
+            <tr th:each="entry : ${schedule}">
+                <td th:text="${entry.key}">Monday</td>
+                <td>
+                    <!-- Render the list of developers for the day -->
+                    <ul>
+                        <li th:each="dev : ${entry.value}" th:text="${dev.name}"></li>
+                    </ul>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="quote">
+            <span class="quote-text">
+                <i th:text="${quote}"></i><br/><br/>
+                - <span th:text="${author}"></span>
+            </span>
+            <img src="../static/tobirama.png" th:src="@{tobirama.png}" class="tobi" alt="Company Logo">
+        </p>
     </div>
 
     <div class="footer">
-        <p>&copy; <span th:utext="${year}"></span>  Service Cops Limited. All rights reserved.</p>
+        <p style="color: #dddddd">&copy; <span th:text="${year}"/> Ceres. All rights reserved.</p>
     </div>
 </div>
 </body>

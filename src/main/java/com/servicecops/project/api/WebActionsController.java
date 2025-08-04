@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.servicecops.project.services.WebActionsService;
 import com.servicecops.project.utils.OperationReturnObject;
+import com.servicecops.project.utils.exceptions.AuthorizationRequiredException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +50,10 @@ public class WebActionsController {
         try {
             // let's avoid parsing twice, and parse from here once and for all.
             JSONObject jsonObject = JSON.parseObject(requestBody);
+
+            if (jsonObject == null){
+                jsonObject = new JSONObject();
+            }
             if (!jsonObject.containsKey("SERVICE")){
                 throw new IllegalStateException("SERVICE UNDEFINED");
             } else if (!jsonObject.containsKey("ACTION")) {
@@ -58,7 +63,18 @@ public class WebActionsController {
                 String action = jsonObject.getString("ACTION").trim();
                 return webActionsService.processAction(service, action, jsonObject);
             }
+        }catch (AuthorizationRequiredException e){
+            e.printStackTrace();
+            OperationReturnObject responseWithError = new OperationReturnObject();
+            responseWithError.setReturnCodeAndReturnMessage(401, e.getMessage());
+            return responseWithError;
+        } catch (IllegalStateException e){
+            e.printStackTrace();
+            OperationReturnObject responseWithError = new OperationReturnObject();
+            responseWithError.setReturnCodeAndReturnMessage(400, e.getMessage());
+            return responseWithError;
         } catch (Exception e){
+            e.printStackTrace();
             OperationReturnObject responseWithError = new OperationReturnObject();
             responseWithError.setReturnCodeAndReturnMessage(500, e.getMessage());
             return responseWithError;

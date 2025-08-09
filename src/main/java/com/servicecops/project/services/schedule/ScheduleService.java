@@ -281,7 +281,6 @@ public class ScheduleService extends BaseWebActionsService {
 
     Integer institutionId;
 
-//    domain check
     if (getUserDomain() == AppDomains.BACK_OFFICE) {
       requires(data, Params.DEPARTMENT_ID.getLabel(), Params.INSTITUTION_ID.getLabel());
       institutionId = data.getInteger(Params.INSTITUTION_ID.getLabel());
@@ -291,7 +290,6 @@ public class ScheduleService extends BaseWebActionsService {
     } else {
       throw new IllegalArgumentException("Institution ID cannot be determined for the current user domain: " + getUserDomain());
     }
-
 
     long deptId = data.getLong(Params.DEPARTMENT_ID.getLabel());
     Department dept = getDepartment(deptId);
@@ -304,7 +302,6 @@ public class ScheduleService extends BaseWebActionsService {
       return res;
     }
 
-    // Get current time in UTC once for efficiency
     LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
 
     List<ScheduleDto> scheduleDtos = institutionSchedules.stream()
@@ -312,19 +309,17 @@ public class ScheduleService extends BaseWebActionsService {
         JSONObject scheduleSummary = new JSONObject();
         JSONArray shiftArray = new JSONArray();
 
-        // --- Shift Related Information ---
         List<Long> shiftsInSchedule = scheduleRecordRepository.findDistinctShifts(schedule.getId());
 
         if (shiftsInSchedule != null && !shiftsInSchedule.isEmpty()) {
           for (Long shiftId : shiftsInSchedule) {
-            if (Objects.nonNull(shiftId) && shiftId > 0) { // Check for null and validity
+            if (Objects.nonNull(shiftId) && shiftId > 0) {
               int shiftIdAsInt = shiftId.intValue();
 
               Optional<Shift> shiftOptional = shiftRepository.findById(shiftIdAsInt);
               if (shiftOptional.isPresent()) {
                 Shift shift = shiftOptional.get();
 
-                // Calculate is_active for the individual shift
                 boolean isShiftActive = false;
                 if (shift.getStartTime() != null && shift.getEndTime() != null) {
                   LocalDateTime shiftStartUtc = shift.getStartTime().toLocalDateTime();
@@ -332,27 +327,14 @@ public class ScheduleService extends BaseWebActionsService {
                   isShiftActive = !nowUtc.isBefore(shiftStartUtc) && !nowUtc.isAfter(shiftEndUtc);
                 }
 
-                List<Long> employeesInShift = scheduleRecordRepository
-                  .findEmployeesInDistinctShiftsForSingleSchedule(schedule.getId(), shiftIdAsInt);
-
-                Integer employeeCount = 0;
-
-
-                // set to 0 if not null
-                if (employeesInShift == null) {
-                  employeesInShift = new ArrayList<>();
-                  employeeCount = 0;
-                }
-
+                List<Long> employeesInShift = scheduleRecordRepository.findEmployeesInDistinctShiftsForSingleSchedule(schedule.getId(), shiftIdAsInt);
 
                 JSONObject shiftSummary = new JSONObject();
                 shiftSummary.put("shift_details", shift);
-                shiftSummary.put("employee_count_in_shift", employeeCount);
+                shiftSummary.put("employee_ids", employeesInShift != null ? employeesInShift : new ArrayList<>()); // Use a single key for the list
                 shiftSummary.put("is_active", isShiftActive);
 
                 shiftArray.add(shiftSummary);
-
-
               } else {
                 log.warn("Warning: Shift with ID {} found in schedule records but not in shift repository for schedule {}", shiftId, schedule.getId());
               }
@@ -363,9 +345,8 @@ public class ScheduleService extends BaseWebActionsService {
         }
         scheduleSummary.put("shifts", shiftArray);
 
-        // --- Employee Related Information ---
         List<Long> employeesInSchedule = scheduleRecordRepository.findDistinctEmployeeIdsForSingleSchedule(schedule.getId());
-        scheduleSummary.put("employee_count_in_schedule", employeesInSchedule.size());
+        scheduleSummary.put("employee_ids", employeesInSchedule != null ? employeesInSchedule : new ArrayList<>()); // Use a single key for the list
 
         return ScheduleDto.fromScheduleAndDepartmentWithSummary(schedule, dept, scheduleSummary);
       })
@@ -375,7 +356,6 @@ public class ScheduleService extends BaseWebActionsService {
     res.setCodeAndMessageAndReturnObject(200, "Schedules returned successfully", scheduleDtos);
     return res;
   }
-
   //  public OperationReturnObject getMySchedules(JSONObject request) throws AuthorizationRequiredException {
 //    requiresAuth();
 //    requires(request, Params.DATA.getLabel());
@@ -487,7 +467,7 @@ public class ScheduleService extends BaseWebActionsService {
 
             JSONObject shiftSummary = new JSONObject();
             shiftSummary.put("shift_details", shift);
-            shiftSummary.put("employee_count_in_shift", employeesInShift == null ? 0 : employeesInShift.size());
+            shiftSummary.put("employee_ids", employeesInShift != null ? employeesInShift : new ArrayList<>()); // Use a single key for the list
             shiftSummary.put("is_active", isShiftActive);
 
             shiftArray.add(shiftSummary);
@@ -503,7 +483,7 @@ public class ScheduleService extends BaseWebActionsService {
 
     // --- Employee Related Information ---
     List<Long> employeesInSchedule = scheduleRecordRepository.findDistinctEmployeeIdsForSingleSchedule(fetchedSchedule.getId());
-    scheduleSummary.put("employee_count_in_schedule", employeesInSchedule.size());
+    scheduleSummary.put("employee_ids", employeesInSchedule != null ? employeesInSchedule : new ArrayList<>()); // Use a single key for the list
 
     ScheduleDto response = ScheduleDto.fromScheduleAndDepartmentWithSummary(fetchedSchedule, fetchedDepartment, scheduleSummary);
 
@@ -511,7 +491,6 @@ public class ScheduleService extends BaseWebActionsService {
     res.setCodeAndMessageAndReturnObject(200, "Schedule returned successfully", response);
     return res;
   }
-
   public OperationReturnObject findSchedulesByInstitutionId(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());

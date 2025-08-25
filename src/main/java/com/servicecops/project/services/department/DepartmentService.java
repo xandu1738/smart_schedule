@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -131,22 +132,20 @@ public class DepartmentService extends BaseWebActionsService {
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
 
     Long institutionId = null;
+    List<Department> departments = new ArrayList<>();
 
     if( getUserDomain() == AppDomains.BACK_OFFICE) {
-      requires(data,Params.INSTITUTION_ID.getLabel());
-      institutionId = data.getLong(Params.INSTITUTION_ID.getLabel());
+//      requires(data,Params.INSTITUTION_ID.getLabel());
+      departments = departmentRepository.findAll();
     }
 
     if (getUserDomain() == AppDomains.INSTITUTION) {
       institutionId = authenticatedUser().getInstitutionId().longValue();
+      if(institutionId == null) {
+        throw new IllegalArgumentException("institution id not found: " + institutionId);
+      }
+      departments = departmentRepository.findByInstitutionId(institutionId).orElseThrow(() -> new IllegalArgumentException("not found "));
     }
-
-    if(institutionId == null) {
-      throw new IllegalArgumentException("institution id not found: " + institutionId);
-    }
-
-    List<Department> departments = departmentRepository.findByInstitutionId(institutionId).orElseThrow(() -> new IllegalArgumentException("not found "));
-
 
     List<DepartmentResponseDTO> response = departments.stream()
       .map(dep -> new DepartmentResponseDTO(

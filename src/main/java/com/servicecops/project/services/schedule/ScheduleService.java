@@ -274,8 +274,6 @@ public class ScheduleService extends BaseWebActionsService {
 //  }
 
 
-
-
   public OperationReturnObject getMySchedules(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());
@@ -293,8 +291,10 @@ public class ScheduleService extends BaseWebActionsService {
       throw new IllegalArgumentException("Institution ID cannot be determined for the current user domain: " + getUserDomain());
     }
 
-    List<Schedule> institutionSchedules = scheduleRepository.findAllByInstitutionId(institutionId)
-      .orElseGet(ArrayList::new);
+    long deptId = data.getLong(Params.DEPARTMENT_ID.getLabel());
+    Department dept = getDepartment(deptId);
+
+    List<Schedule> institutionSchedules = scheduleRepository.findAllByInstitutionIdAndDepartmentId(institutionId, dept.getId());
 
     if (institutionSchedules.isEmpty()) {
       OperationReturnObject res = new OperationReturnObject();
@@ -302,7 +302,6 @@ public class ScheduleService extends BaseWebActionsService {
       return res;
     }
 
-    // Get current time in UTC once for efficiency
     LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
 
     List<ScheduleDto> scheduleDtos = institutionSchedules.stream()
@@ -310,22 +309,17 @@ public class ScheduleService extends BaseWebActionsService {
         JSONObject scheduleSummary = new JSONObject();
         JSONArray shiftArray = new JSONArray();
 
-        Department department = departmentRepository.findById(schedule.getDepartmentId().longValue())
-          .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + schedule.getDepartmentId() + " for schedule ID: " + schedule.getId()));
-
-        // --- Shift Related Information ---
         List<Long> shiftsInSchedule = scheduleRecordRepository.findDistinctShifts(schedule.getId());
 
         if (shiftsInSchedule != null && !shiftsInSchedule.isEmpty()) {
           for (Long shiftId : shiftsInSchedule) {
-            if (Objects.nonNull(shiftId) && shiftId > 0) { // Check for null and validity
+            if (Objects.nonNull(shiftId) && shiftId > 0) {
               int shiftIdAsInt = shiftId.intValue();
 
               Optional<Shift> shiftOptional = shiftRepository.findById(shiftIdAsInt);
               if (shiftOptional.isPresent()) {
                 Shift shift = shiftOptional.get();
 
-                // Calculate is_active for the individual shift
                 boolean isShiftActive = false;
                 if (shift.getStartTime() != null && shift.getEndTime() != null) {
                   LocalDateTime shiftStartUtc = shift.getStartTime().toLocalDateTime();
@@ -333,50 +327,36 @@ public class ScheduleService extends BaseWebActionsService {
                   isShiftActive = !nowUtc.isBefore(shiftStartUtc) && !nowUtc.isAfter(shiftEndUtc);
                 }
 
-                List<Long> employeesInShift = scheduleRecordRepository
-                  .findEmployeesInDistinctShiftsForSingleSchedule(schedule.getId(), shiftIdAsInt);
-
-                Integer employeeCount = 0;
-
-
-                // set to 0 if not null
-                if (employeesInShift == null) {
-                  employeesInShift = new ArrayList<>();
-                  employeeCount = employeesInShift.size();
-                }
-
+                List<Long> employeesInShift = scheduleRecordRepository.findEmployeesInDistinctShiftsForSingleSchedule(schedule.getId(), shiftIdAsInt);
 
                 JSONObject shiftSummary = new JSONObject();
                 shiftSummary.put("shift_details", shift);
-                shiftSummary.put("employee_count_in_shift", employeeCount);
+                shiftSummary.put("employee_ids", employeesInShift != null ? employeesInShift : new ArrayList<>()); // Use a single key for the list
                 shiftSummary.put("is_active", isShiftActive);
 
                 shiftArray.add(shiftSummary);
-
-
               } else {
-                log.warn("Warning: Shift with ID " + shiftId + " found in schedule records but not in shift repository for schedule " + schedule.getId());
+                log.warn("Warning: Shift with ID {} found in schedule records but not in shift repository for schedule {}", shiftId, schedule.getId());
               }
             } else {
-              log.warn("Warning: Null or invalid shift ID (" + shiftId + ") found in schedule records for schedule " + schedule.getId() + ". Skipping.");
+              log.warn("Warning: Null or invalid shift ID ({}) found in schedule records for schedule {}. Skipping.", shiftId, schedule.getId());
             }
           }
         }
         scheduleSummary.put("shifts", shiftArray);
 
-        // --- Employee Related Information ---
         List<Long> employeesInSchedule = scheduleRecordRepository.findDistinctEmployeeIdsForSingleSchedule(schedule.getId());
-        scheduleSummary.put("employee_count_in_schedule", employeesInSchedule.size());
+        scheduleSummary.put("employee_ids", employeesInSchedule != null ? employeesInSchedule : new ArrayList<>()); // Use a single key for the list
 
-        return ScheduleDto.fromScheduleAndDepartmentWithSummary(schedule, department, scheduleSummary);
+        return ScheduleDto.fromScheduleAndDepartmentWithSummary(schedule, dept, scheduleSummary);
       })
-      .collect(Collectors.toList());
+      .toList();
 
     OperationReturnObject res = new OperationReturnObject();
     res.setCodeAndMessageAndReturnObject(200, "Schedules returned successfully", scheduleDtos);
     return res;
   }
-//  public OperationReturnObject getMySchedules(JSONObject request) throws AuthorizationRequiredException {
+  //  public OperationReturnObject getMySchedules(JSONObject request) throws AuthorizationRequiredException {
 //    requiresAuth();
 //    requires(request, Params.DATA.getLabel());
 //    JSONObject data = request.getJSONObject(Params.DATA.getLabel());
@@ -453,29 +433,64 @@ public class ScheduleService extends BaseWebActionsService {
     JSONObject data = request.getJSONObject(Params.DATA.getLabel());
     requires(data, Params.SCHEDULE_ID.getLabel());
     Integer scheduleId = data.getInteger(Params.SCHEDULE_ID.getLabel());
-    Department fetchedDepartment = null;
 
+    Schedule fetchedSchedule = scheduleRepository.findById(scheduleId)
+      .orElseThrow(() -> new IllegalArgumentException("Schedule not found with ID: " + scheduleId));
 
-    Schedule fetchedSchedule = scheduleRepository.findById(scheduleId).orElse(null);
-    if (fetchedSchedule == null) {
-      throw new IllegalArgumentException("Schedule not found with ID: " + scheduleId);
+    Department fetchedDepartment = departmentRepository.findById(fetchedSchedule.getDepartmentId().longValue())
+      .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + fetchedSchedule.getDepartmentId()));
+
+    JSONObject scheduleSummary = new JSONObject();
+    JSONArray shiftArray = new JSONArray();
+
+    // --- Shift Related Information ---
+    List<Long> shiftsInSchedule = scheduleRecordRepository.findDistinctShifts(fetchedSchedule.getId());
+    LocalDateTime nowUtc = LocalDateTime.now(ZoneOffset.UTC);
+
+    if (shiftsInSchedule != null && !shiftsInSchedule.isEmpty()) {
+      for (Long shiftId : shiftsInSchedule) {
+        if (Objects.nonNull(shiftId) && shiftId > 0) {
+          int shiftIdAsInt = shiftId.intValue();
+          Optional<Shift> shiftOptional = shiftRepository.findById(shiftIdAsInt);
+
+          if (shiftOptional.isPresent()) {
+            Shift shift = shiftOptional.get();
+
+            boolean isShiftActive = false;
+            if (shift.getStartTime() != null && shift.getEndTime() != null) {
+              LocalDateTime shiftStartUtc = shift.getStartTime().toLocalDateTime();
+              LocalDateTime shiftEndUtc = shift.getEndTime().toLocalDateTime();
+              isShiftActive = !nowUtc.isBefore(shiftStartUtc) && !nowUtc.isAfter(shiftEndUtc);
+            }
+
+            List<Long> employeesInShift = scheduleRecordRepository.findEmployeesInDistinctShiftsForSingleSchedule(fetchedSchedule.getId(), shiftIdAsInt);
+
+            JSONObject shiftSummary = new JSONObject();
+            shiftSummary.put("shift_details", shift);
+            shiftSummary.put("employee_ids", employeesInShift != null ? employeesInShift : new ArrayList<>()); // Use a single key for the list
+            shiftSummary.put("is_active", isShiftActive);
+
+            shiftArray.add(shiftSummary);
+          } else {
+            log.warn("Warning: Shift with ID {} found in schedule records but not in shift repository for schedule {}", shiftId, fetchedSchedule.getId());
+          }
+        } else {
+          log.warn("Warning: Null or invalid shift ID ({}) found in schedule records for schedule {}. Skipping.", shiftId, fetchedSchedule.getId());
+        }
+      }
     }
+    scheduleSummary.put("shifts", shiftArray);
 
+    // --- Employee Related Information ---
+    List<Long> employeesInSchedule = scheduleRecordRepository.findDistinctEmployeeIdsForSingleSchedule(fetchedSchedule.getId());
+    scheduleSummary.put("employee_ids", employeesInSchedule != null ? employeesInSchedule : new ArrayList<>()); // Use a single key for the list
 
-    Optional<Department> departmentOptional = departmentRepository.findById(fetchedSchedule.getDepartmentId().longValue());
+    ScheduleDto response = ScheduleDto.fromScheduleAndDepartmentWithSummary(fetchedSchedule, fetchedDepartment, scheduleSummary);
 
-    if (!departmentOptional.isEmpty()) {
-      fetchedDepartment = departmentOptional.get();
-    }
-
-    ScheduleDto response = new ScheduleDto().fromScheduleAndDepartment(fetchedSchedule, fetchedDepartment);
     OperationReturnObject res = new OperationReturnObject();
-    res.setCodeAndMessageAndReturnObject(200, "schedule return successfully: ", response);
+    res.setCodeAndMessageAndReturnObject(200, "Schedule returned successfully", response);
     return res;
-
   }
-
-
   public OperationReturnObject findSchedulesByInstitutionId(JSONObject request) throws AuthorizationRequiredException {
     requiresAuth();
     requires(request, Params.DATA.getLabel());
@@ -499,7 +514,7 @@ public class ScheduleService extends BaseWebActionsService {
     }
     Integer departmentId = data.getInteger(Params.DEPARTMENT_ID.getLabel());
 
-    Optional<List<Schedule>> institutionSchedules = scheduleRepository.findAllByInstitutionIdAndDepartmentId(institutionId, departmentId);
+    List<Schedule> institutionSchedules = scheduleRepository.findAllByInstitutionIdAndDepartmentId(institutionId, departmentId);
 
     OperationReturnObject res = new OperationReturnObject();
     res.setCodeAndMessageAndReturnObject(200, "returned successful ", institutionSchedules);
